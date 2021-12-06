@@ -41,7 +41,7 @@ acousticIndices <- acousticIndices[!second(acousticIndices$DATETIME) <50 | !seco
 acousticIndices$DATETIME <- round_date(acousticIndices$DATETIME, "1 minute")
 
 #extract hour and 1 min interval from datetime
-acousticIndices$TIME_NEW <- factor(strftime(acousticIndices$DATETIME, format = "%H:%M:%S"))
+acousticIndices$TIME_NEW <- strftime(acousticIndices$DATETIME, format = "%H:%M:%S")
 
 #Only keep data corresponding to 7-day period of biodiversity surveys (i.e. 12pm first survey day to 12pm last survey day)
 

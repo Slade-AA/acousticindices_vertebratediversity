@@ -66,69 +66,33 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
     annotate(geom = "text", -Inf, Inf, hjust = -0.1, vjust = 1.8, parse = T,
              label = paste0("R^2 == ", format(round(as.numeric(performance::r2(Models_Indices_Richness[[paste0(currentAcousticIndex, "_", currentRichness)]])[[2]]), 2), nsmall = 2))) +
     labs(x = gsub("_mean", "", paste0(currentAcousticIndex)), y = "Species Richness") +
-    theme_classic()
+    theme_classic() +
+    theme(axis.title.y = element_blank())
 }
+
+
+# Arrange multi-panel plots -----------------------------------------------
 
 #Plot acoustic indices vs bird richness
 Plot_Indices_Birds <- plot_grid(plotlist = Plots_Indices_Richness[grep("birds", names(Plots_Indices_Richness))],
                                 ncol = 4) %>% annotate_figure(top = "lmer - AcousticIndicesMorning_BirdRichness")
 
-annotate_figure(Plot_Indices_Birds,
-                left = "Species Richness",
-                bottom = "Acoustic Index")
+Plot_Indices_Birds <- annotate_figure(Plot_Indices_Birds,
+                                      left = "Species Richness",
+                                      bottom = "Acoustic Index")
 
-ggsave(paste0("./outputs/figures/", Sys.Date(), "Plots_BirdRichness_MorningIndicesMean_lmer.png"),
-       width = 30, height = 18, units = "cm", dpi = 1200)
+ggsave(filename = paste0("./outputs/figures/", Sys.Date(), "Plots_BirdRichness_MorningIndicesMean_lmer.png"),
+       plot = Plot_Indices_Birds,
+       width = 30, height = 25, units = "cm", dpi = 1200)
 
 #Plot acoustic indices vs frog richness
 Plot_Indices_Frogs <- plot_grid(plotlist = Plots_Indices_Richness[grep("frogs", names(Plots_Indices_Richness))],
                                 ncol = 4) %>% annotate_figure(top = "lmer - AcousticIndicesEvening_FrogRichness")
 
-ggsave(paste0("./outputs/figures/", Sys.Date(), "Plots_FrogRichness_EveningIndicesMean_lmer.png"),
-       width = 30, height = 18, units = "cm", dpi = 1200)
+Plot_Indices_Frogs <- annotate_figure(Plot_Indices_Frogs,
+                                      left = "Species Richness",
+                                      bottom = "Acoustic Index")
 
-
-
-
-
-
-
-
-#Mixed-effects model plots
-Plots_SensorTotals_MorningIndicesMean_lmer <- list()
-model_lmer <- list()
-bb.lmer <- list()
-for (indice in grep("mean", colnames(IndicesSummary_Morning))) {
-  currentAcousticIndex <- gsub("_mean", "", colnames(IndicesSummary_Morning[,indice]))
-  
-  #Mixed-effects model with 'Site' as random effect
-  model_lmer[[currentAcousticIndex]] <- lmer(as.formula(paste0("n ~ ", colnames(IndicesSummary_Morning[,indice]), " + (1|Site)")), 
-                                             data = Counts_SiteSensor_IndicesMorning)
-  
-  #Model-based (Semi-)Parametric Bootstrap for Mixed Models - Used to calculate confidence intervals
-  bb.lmer[[currentAcousticIndex]] <- bootMer(model_lmer[[currentAcousticIndex]],
-                     FUN = function(x)predict(x, re.form=NA),
-                     nsim = 1000)
-  
-  Counts_SiteSensor_IndicesMorning$lci <- apply(bb.lmer[[currentAcousticIndex]]$t, 2, quantile, 0.025)
-  Counts_SiteSensor_IndicesMorning$uci <- apply(bb.lmer[[currentAcousticIndex]]$t, 2, quantile, 0.975)
-  Counts_SiteSensor_IndicesMorning$pred <- predict(model_lmer[[currentAcousticIndex]], re.form=NA)
-  
-  #Plot of fixed effects and confidence intervals
-  Plots_SensorTotals_MorningIndicesMean_lmer[[currentAcousticIndex]] <- Counts_SiteSensor_IndicesMorning %>% 
-    ggplot(aes_string(x = colnames(IndicesSummary_Morning[,indice]), y = "n")) + 
-    geom_ribbon(aes_string(x = colnames(IndicesSummary_Morning[,indice]), ymin = "lci", ymax = "uci"), fill = "black", alpha = 0.1) +
-    geom_line(aes_string(x = colnames(IndicesSummary_Morning[,indice]), y = "pred"), color = "black", lwd = 1) +
-    geom_point(size = 2) +
-    scale_y_continuous(limits = c(10, 50)) + 
-    annotate(geom = "text", -Inf, Inf, hjust = -0.1, vjust = 1.8, parse = T,
-             label = paste0("R^2 == ", format(round(as.numeric(performance::r2(model_lmer[[currentAcousticIndex]])[[2]]), 2), nsmall = 2))) +
-    labs(x = gsub("_mean", "", colnames(IndicesSummary_Morning[,indice])), y = "Species Richness") +
-    theme_classic()
-}
-
-plot_grid(plotlist = Plots_SensorTotals_MorningIndicesMean_lmer,
-          ncol = 4) %>% annotate_figure(top = "lmer - AcousticIndicesMorning_BirdRichness")
-
-ggsave("./Plots/Plots_SensorTotals_MorningIndicesMean_lmer.png",
-       width = 30, height = 18, units = "cm", dpi = 1200)
+ggsave(filename = paste0("./outputs/figures/", Sys.Date(), "Plots_FrogRichness_EveningIndicesMean_lmer.png"),
+       plot = Plot_Indices_Frogs,
+       width = 30, height = 25, units = "cm", dpi = 1200)

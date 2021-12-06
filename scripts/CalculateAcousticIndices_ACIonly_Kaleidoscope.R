@@ -1,0 +1,72 @@
+# Set up ------------------------------------------------------------------
+
+library(tidyverse)
+library(tuneR) #used to read in audio
+library(seewave) #used to generate spectrogram
+
+indiceDuration <- 60
+
+#Determine audio files to use
+baseInputDirectory <- "G:/audio_recorder_downloads_trip2_wavs"
+audioDirs <- list.dirs(baseInputDirectory, recursive = FALSE)
+audioDirs <- audioDirs[grep("^G:/audio_recorder_downloads_trip2_wavs/_.*", audioDirs, invert = TRUE)]
+
+audioFiles <- list.files(audioDirs, full.names = TRUE, recursive = TRUE)
+
+#Set the frequency limits to use
+#aciLimits <- c(0, 0) #default is c(0, 0)
+aciLimits <- list(default = c(0, 0), low = c(1000, 4000), mid = c(3000, 6000), high = c(5000, 8000))
+
+
+# Generate indices ----------------------------------------------------------
+
+for (limit in aciLimits) {
+  #Create output directory and write file list and settings.ini
+  baseOutputDirectory <- "G:/_AcousticIndices_Kaleidoscope/spring.2021"
+  acousticIndicesOutputDirectory <- paste0(baseOutputDirectory, "/", Sys.Date(), 
+                                           "_ACI", limit[1], "_", limit[2])
+  dir.create(acousticIndicesOutputDirectory)
+  
+  #ACIonly settings file
+  settingsFile <- "C:/Users/jc696551/OneDrive - James Cook University/Papers/A2O_BiodiversitySurveys/AcousticIndices/KaleidoscopeSettingsFiles/settings_ACIonly.ini"
+  
+  write.table(audioFiles,
+              file = paste0(acousticIndicesOutputDirectory, "/filelist.txt"),
+              row.names = FALSE,
+              col.names = FALSE,
+              quote = FALSE)
+  
+  #Create settings file with correct output directory
+  data <- readLines(settingsFile)
+  
+  data[22] <- paste0("directory=", gsub("/", "\\\\\\\\", acousticIndicesOutputDirectory))
+  cat(data[22])
+  
+  data[26] <- paste0("max=", indiceDuration)
+  
+  #ACI limits
+  data[132] <- paste0("fmin=", limit[1])
+  data[133] <- paste0("fmax=", limit[2])
+  
+  writeLines(data, paste0(acousticIndicesOutputDirectory, "/", "customsettings.ini"))
+  
+  #Run Kaleidoscope CLI
+  #Need to get full command to have each file path have single backslashes rather than double backslashes
+  #Need to get full command to have each file path be enclosed in quotes
+  baseCommand <- '"C:\\Program Files\\Wildlife Acoustics\\Kaleidoscope\\kaleidoscope-cli.exe" --batch "'
+  
+  fullCommand <- paste0(baseCommand,
+                        list.files(path = acousticIndicesOutputDirectory,
+                                   pattern = "*customsettings.ini$",
+                                   full.names = TRUE),
+                        '" --file-list "',
+                        list.files(path = acousticIndicesOutputDirectory,
+                                   pattern = "*filelist.txt$",
+                                   full.names = TRUE),
+                        '"')
+  
+  fullCommand <- gsub("/", "\\\\", fullCommand)
+  
+  system(command = fullCommand, invisible = FALSE)
+}
+

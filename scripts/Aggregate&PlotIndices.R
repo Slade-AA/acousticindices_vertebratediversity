@@ -8,19 +8,23 @@ library(viridis)
 
 # Read in and clean indices -----------------------------------------------
 
-setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindices_vertebratediversity/rawdata/acousticindices/allindices")
+setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindices_vertebratediversity")
 
-files <- list.files(path = "./2021-11-15/",
+files <- list.files(path = "./rawdata/acousticindices/allindices",
                     pattern = "acousticindex.csv$",
                     full.names = TRUE, 
                     recursive = TRUE)
 
-acousticIndices <- read_csv(file = files)
+acousticIndices <- lapply(files, read_csv)
+names(acousticIndices) <- c("fall.2021", "spring.2021")
+acousticIndices <- bind_rows(acousticIndices, .id = "sampling.period")
+acousticIndices$sampling.period <- factor(acousticIndices$sampling.period)
+
 
 #remove any rows with durations less than 59 seconds? - from short recordings?
 acousticIndices <- acousticIndices[!acousticIndices$DURATION < 59,]
 
-acousticIndices$Site <- factor(gsub("G:\\\\audio_recorder_downloads_wavs\\\\(.+?)_.*", "\\1", acousticIndices$FOLDER))
+acousticIndices$Site <- factor(gsub("G:\\\\.*\\\\(.+?)_.*", "\\1", acousticIndices$FOLDER))
 
 acousticIndices$Sensor <- factor(gsub(".*[0-9|ING]\\\\(.+?)\\\\.*", "\\1", acousticIndices$FOLDER))
 
@@ -41,17 +45,25 @@ acousticIndices$TIME_NEW <- factor(strftime(acousticIndices$DATETIME, format = "
 
 #Only keep data corresponding to 7-day period of biodiversity surveys (i.e. 12pm first survey day to 12pm last survey day)
 
-acousticIndices_Trip1 <- rbind(acousticIndices %>% filter(Site == "Duval" & DATETIME >= "2021-04-18 12:00:00" & DATETIME < "2021-04-25 12:00:00"),
-                               acousticIndices %>% filter(Site == "Mourachan" & DATETIME >= "2021-05-09 12:00:00" & DATETIME < "2021-05-16 12:00:00"),
-                               acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-06-14 12:00:00" & DATETIME < "2021-06-21 12:00:00"),
-                               acousticIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-04-29 12:00:00" & DATETIME < "2021-05-06 12:00:00"),
-                               acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-06-03 12:00:00" & DATETIME < "2021-06-10 12:00:00"),
-                               acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-07-05 12:00:00" & DATETIME < "2021-07-12 12:00:00"))
+acousticIndices <- rbind(acousticIndices %>% filter(Site == "Duval" & DATETIME >= "2021-04-18 12:00:00" & DATETIME < "2021-04-25 12:00:00"), #fall.2021
+                         acousticIndices %>% filter(Site == "Mourachan" & DATETIME >= "2021-05-09 12:00:00" & DATETIME < "2021-05-16 12:00:00"),
+                         acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-06-14 12:00:00" & DATETIME < "2021-06-21 12:00:00"),
+                         acousticIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-04-29 12:00:00" & DATETIME < "2021-05-06 12:00:00"),
+                         acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-06-03 12:00:00" & DATETIME < "2021-06-10 12:00:00"),
+                         acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-07-05 12:00:00" & DATETIME < "2021-07-12 12:00:00"),
+                         acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-10-09 12:00:00" & DATETIME < "2021-10-16 12:00:00"), #spring.2021
+                         acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-09-29 12:00:00" & DATETIME < "2021-10-06 12:00:00"),
+                         acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-11-09 12:00:00" & DATETIME < "2021-11-16 12:00:00"))
+
+acousticIndices %>% group_by(sampling.period, Site) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
+
 
 # Create plots ------------------------------------------------------------
 
-for (site in levels(acousticIndices_Trip1$Site)) {
-  data <- acousticIndices_Trip1[acousticIndices_Trip1$Site == site,]
+SamplingTrips <- unique(acousticIndices[c("Site", "sampling.period")])
+
+for (trip in 1:nrow(SamplingTrips)) {
+  data <- acousticIndices[acousticIndices$Site == SamplingTrips$Site[trip] & acousticIndices$sampling.period == SamplingTrips$sampling.period[trip],]
   
   
   Plot_ACI <- ggplot(data = data,
@@ -141,9 +153,9 @@ for (site in levels(acousticIndices_Trip1$Site)) {
   # of the height of one plot (via rel_heights).
   Plots_Combined <- plot_grid(Plots_Combined, legend_b, ncol = 1, rel_heights = c(1, .1))
   
-  ggsave(filename = paste0("./2021-11-15/", site, ".png"),
+  ggsave(filename = paste0("./outputs/figures/", Sys.Date(), "_", SamplingTrips$Site[trip], "_", SamplingTrips$sampling.period[trip], ".png"),
          plot = Plots_Combined,
          width = 15, height = 20, units = "cm", dpi = 1200)
 }
 
-write_csv(acousticIndices_Trip1, "./acousticIndices_Trip1.csv")
+save(acousticIndices, file = paste0("./outputs/data/", Sys.Date(), "_acousticIndices.RData"))

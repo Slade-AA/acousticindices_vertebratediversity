@@ -42,8 +42,13 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
   data <- acousticIndices_richness %>% filter(type == currentRichness)
   
   #Mixed-effects model with 'Site' as random effect
-  Models_Indices_Richness[[paste0(currentAcousticIndex, "_", currentRichness)]] <- lmer(as.formula(paste0("richness ~ ", currentAcousticIndex, " + (1|Site)")), 
+  Models_Indices_Richness[[paste0(currentAcousticIndex, "_", currentRichness)]] <- lmer(as.formula(paste0("richness ~ ", currentAcousticIndex, " + (1|Site/Sensor) + (1|sampling.period)")), 
                                                                                         data = data)
+  
+  #Plot and save visual check of model assumptions
+  png(filename = paste0("./outputs/model.checks/", currentAcousticIndex, "_", currentRichness, ".png"), width = 30, height = 20, units = "cm", res = 800)
+  performance::check_model(Models_Indices_Richness[[paste0(currentAcousticIndex, "_", currentRichness)]])
+  dev.off()
   
   #Model-based (Semi-)Parametric Bootstrap for Mixed Models - Used to calculate confidence intervals
   Bootstrap_Indices_Richness[[paste0(currentAcousticIndex, "_", currentRichness)]] <- bootMer(Models_Indices_Richness[[paste0(currentAcousticIndex, "_", currentRichness)]],

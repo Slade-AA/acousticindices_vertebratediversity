@@ -1,22 +1,29 @@
+name: Render README
+
+
+# Controls when the action will run
 on:
   push:
     paths:
       - README.Rmd
 
-name: Render README
-
 jobs:
   render:
     name: Render README
+    # The type of runner that the job will run on
     runs-on: macOS-latest
     steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: r-lib/actions/setup-r@v1
       - uses: r-lib/actions/setup-pandoc@v1
+      # install packages needed
       - name: Install rmarkdown
         run: Rscript -e 'install.packages("rmarkdown")'
+        # Render READEME.md using rmarkdown
       - name: Render README
         run: Rscript -e 'rmarkdown::render("README.Rmd")'
+        # Commit changes and push to repository
       - name: Commit results
         run: |
           git commit README.md -m 'Re-build README.Rmd' || echo "No changes to commit"

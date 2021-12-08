@@ -95,7 +95,29 @@ for (combination in 1:nrow(plot_combinations)) {
                     left = ytitle,
                     bottom = "Acoustic Index")
   
-  ggsave(filename = paste0("./outputs/figures/", Sys.Date(), "Plots_", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination], ".png"),
+  ggsave(filename = paste0("./outputs/figures.local/", Sys.Date(), "Plots_", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination], ".png"),
          plot = Plot,
          width = 30, height = 25, units = "cm", dpi = 1200)
+}
+
+#Save plots of specific indices that we are going to analyse
+indicesToUse <- c("ACI", 
+                  "ADI", 
+                  "AEI", 
+                  "BI", 
+                  "NDSI", 
+                  "EVN")
+
+for (combination in 1:nrow(plot_combinations)) {
+  ytitle <- ifelse(plot_combinations$diversity[combination] == 'richness', "Species Richness", "Shannon Diversity")
+  
+  Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], "_(", paste0(indicesToUse, collapse = "|"), ")_.*", plot_combinations$taxa[combination]), names(Plots_Indices_Richness), value = T)],
+                    ncol = 3) %>% 
+    annotate_figure(top = paste0("lmer - AcousticIndices_", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination]),
+                    left = ytitle,
+                    bottom = "Acoustic Index")
+  
+  ggsave(filename = paste0("./outputs/figures/", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination], ".png"),
+         plot = Plot,
+         width = 22.5, height = 12.5, units = "cm", dpi = 1200)
 }

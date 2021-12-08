@@ -4,23 +4,21 @@
 Data and analysis scripts for paper looking at correlation between
 various acoustic indices and vertebrate diversity
 
-![Alt text](outputs/figures/2021-12-07Plots_birds_richness.png)
+Six different acoustic indices were used: ACI, ADI, AEI, BI, NDSI and
+EVN?
 
-``` r
-summary(iris)
-```
+# Species richness
 
-    ##   Sepal.Length    Sepal.Width     Petal.Length    Petal.Width   
-    ##  Min.   :4.300   Min.   :2.000   Min.   :1.000   Min.   :0.100  
-    ##  1st Qu.:5.100   1st Qu.:2.800   1st Qu.:1.600   1st Qu.:0.300  
-    ##  Median :5.800   Median :3.000   Median :4.350   Median :1.300  
-    ##  Mean   :5.843   Mean   :3.057   Mean   :3.758   Mean   :1.199  
-    ##  3rd Qu.:6.400   3rd Qu.:3.300   3rd Qu.:5.100   3rd Qu.:1.800  
-    ##  Max.   :7.900   Max.   :4.400   Max.   :6.900   Max.   :2.500  
-    ##        Species  
-    ##  setosa    :50  
-    ##  versicolor:50  
-    ##  virginica :50  
-    ##                 
-    ##                 
-    ##
+Correlation between bird species richness and various acoustic indices
+![Alt text](outputs/figures/birds_richness.png)
+
+Correlation between frog species richness and various acoustic indices
+![Alt text](outputs/figures/frogs_richness.png)
+
+# Shannon diversity index
+
+Correlation between shannon diversity index for birds and various
+acoustic indices ![Alt text](outputs/figures/birds_shannon.png)
+
+Correlation between shannon diversity index for frogs and various
+acoustic indices ![Alt text](outputs/figures/frogs_shannon.png)

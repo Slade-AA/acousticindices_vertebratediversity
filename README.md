@@ -7,6 +7,12 @@ various acoustic indices and vertebrate diversity
 Six different acoustic indices were used: ACI, ADI, AEI, BI, NDSI and
 EVN?
 
+## To do
+
+  - Rerun analyses with recleaned dataset (waiting on Seb and Don)
+  - Check whether I should be running glmer for some analyses -
+    fitdistrplus (zero-inflated beta distribution for frogs?)
+
 ## Results
 
 ### Species richness

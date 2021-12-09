@@ -34,7 +34,7 @@ Bootstrap_Indices_Richness <- list()
 
 IndicesRichness_Combinations <- expand.grid(index = grep("mean", colnames(acousticIndices_richness), value = TRUE),
                                             taxa = unique(acousticIndices_richness$type),
-                                            diversity = c("richness", "shannon"))
+                                            diversity = c("richness", "shannon", "count"))
 
 for (combination in 1:nrow(IndicesRichness_Combinations)) {
   currentAcousticIndex <- IndicesRichness_Combinations$index[combination]
@@ -64,7 +64,9 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
   ylimits <- if(currentTaxa == 'birds' & currentDiversity == 'richness') {c(10, 50)} else 
     if(currentTaxa == 'frogs' & currentDiversity == 'richness') {c(0, 12)} else
       if(currentTaxa == 'birds' & currentDiversity == 'shannon') {c(1.8, 4.2)} else 
-        if(currentTaxa == 'frogs' & currentDiversity == 'shannon') {c(0, 1.2)}
+        if(currentTaxa == 'frogs' & currentDiversity == 'shannon') {c(0, 1.2)} else
+          if(currentTaxa == 'birds' & currentDiversity == 'count') {c(0, 500)} else 
+            if(currentTaxa == 'frogs' & currentDiversity == 'count') {c(0, 60)} 
   
   
   #Plot of fixed effects and confidence intervals
@@ -87,7 +89,10 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
 plot_combinations <- unique(IndicesRichness_Combinations[,c('diversity','taxa')])
 
 for (combination in 1:nrow(plot_combinations)) {
-  ytitle <- ifelse(plot_combinations$diversity[combination] == 'richness', "Species Richness", "Shannon Diversity")
+  
+  ytitle <- if(plot_combinations$diversity[combination] == 'richness') {c("Species Richness")} else
+    if(plot_combinations$diversity[combination] == 'shannon') {c("Shannon Diversity")} else
+      if(plot_combinations$diversity[combination] == 'count') {c("Total Abundance")}
   
   Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], ".*", plot_combinations$taxa[combination]), names(Plots_Indices_Richness))],
                     ncol = 4) %>% 
@@ -109,7 +114,10 @@ indicesToUse <- c("ACI",
                   "EVN")
 
 for (combination in 1:nrow(plot_combinations)) {
-  ytitle <- ifelse(plot_combinations$diversity[combination] == 'richness', "Species Richness", "Shannon Diversity")
+  
+  ytitle <- if(plot_combinations$diversity[combination] == 'richness') {c("Species Richness")} else
+    if(plot_combinations$diversity[combination] == 'shannon') {c("Shannon Diversity")} else
+      if(plot_combinations$diversity[combination] == 'count') {c("Total Abundance")}
   
   Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], "_(", paste0(indicesToUse, collapse = "|"), ")_.*", plot_combinations$taxa[combination]), names(Plots_Indices_Richness), value = T)],
                     ncol = 3) %>% 

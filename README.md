@@ -24,3 +24,11 @@ acoustic indices ![Alt text](outputs/figures/birds_shannon.png)
 
 Correlation between shannon diversity index for frogs and various
 acoustic indices ![Alt text](outputs/figures/frogs_shannon.png)
+
+### Total abundance
+
+Correlation between total bird abundance and various acoustic indices
+![Alt text](outputs/figures/birds_count.png)
+
+Correlation between total frog abundance and various acoustic indices
+![Alt text](outputs/figures/frogs_count.png)

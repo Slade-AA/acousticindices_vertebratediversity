@@ -16,14 +16,21 @@ setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindic
 
 load("./outputs/data/2021-12-06_acousticIndices_summary.RData") #load indices
 
-richness <- read_csv("./rawdata/biodiversity/richness.csv") #load richness
+richness <- read_csv("./rawdata/biodiversity/richness_diversity_updated.csv") #load richness
 
 #format richness to match indices
-richness <- richness %>% rename(Site = site, Sensor = plot)
-richness$Sensor <- gsub(" ", "", richness$Sensor)
+richness <- richness %>% rename(Site = site, Sensor = original.plot, richness = Richness, shannon = Shannon, type = taxa)
+#richness$Sensor <- gsub(" ", "", richness$Sensor) #now redundant?
+richness <- richness %>% mutate(sampling.period = paste0(season, ".2021"))
+richness <- richness %>% mutate(type = recode(type,
+                                              'bird' = 'birds', 'frog' = 'frogs'))
+
+#duplicate indices 'all' and rename to 'not.birds' for comparison to all other species
+acousticIndices_summary <- rbind(acousticIndices_summary, 
+                                 acousticIndices_summary %>% filter(type == 'all') %>% mutate(type = recode(type, 'all' = 'not.birds')))
 
 #merge richness and acoustic indices
-acousticIndices_richness <- merge(acousticIndices_summary, richness[richness$day.date == 'all',], by = c("type", "Site", "Sensor", "sampling.period"))
+acousticIndices_richness <- merge(acousticIndices_summary, richness[richness$day == 'all',], by = c("type", "Site", "Sensor", "sampling.period"))
 
 
 # Mixed-effects models ----------------------------------------------------

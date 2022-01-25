@@ -55,9 +55,9 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
                                                                                                                                   data = data)
   
   #Plot and save visual check of model assumptions
-  png(filename = paste0("./outputs/model.checks/", currentDiversity, "_", currentAcousticIndex, "_", currentTaxa, ".png"), width = 30, height = 20, units = "cm", res = 800)
-  print(performance::check_model(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]))
-  dev.off()
+  #png(filename = paste0("./outputs/model.checks/", currentDiversity, "_", currentAcousticIndex, "_", currentTaxa, ".png"), width = 30, height = 20, units = "cm", res = 800)
+  #print(performance::check_model(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]))
+  #dev.off()
   
   #Model-based (Semi-)Parametric Bootstrap for Mixed Models - Used to calculate confidence intervals
   Bootstrap_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]] <- bootMer(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]],
@@ -82,7 +82,7 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
     geom_ribbon(aes_string(x = paste0(currentAcousticIndex), ymin = "lci", ymax = "uci"), fill = "black", alpha = 0.1) +
     geom_line(aes_string(x = paste0(currentAcousticIndex), y = "pred"), color = "black", lwd = 1) +
     geom_point(size = 2) +
-    scale_y_continuous(limits = ylimits) + 
+    #scale_y_continuous(limits = ylimits) + 
     annotate(geom = "text", -Inf, Inf, hjust = -0.1, vjust = 1.8, parse = T,
              label = paste0("R^2 == ", format(round(as.numeric(performance::r2(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]])[[2]]), 2), nsmall = 2))) +
     labs(x = gsub("_mean", "", paste0(currentAcousticIndex)), y = "Diversity Measure") +

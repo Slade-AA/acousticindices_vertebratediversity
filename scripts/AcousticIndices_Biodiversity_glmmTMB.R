@@ -35,14 +35,24 @@ acousticIndices_richness <- merge(acousticIndices_summary, richness[richness$day
 
 
 #scale all indices to 0-1 and 'censor' min and max values
-range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+#range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+#acousticIndices_richness <- acousticIndices_richness %>% 
+#  mutate_at(vars(matches("_mean")), range01) %>% 
+#  mutate_at(vars(matches("_mean")), ~ replace(.x, which(.x == min(.x)), 0.00001)) %>% 
+#  mutate_at(vars(matches("_mean")), ~ replace(.x, which(.x == max(.x)), 0.99999))
+
+
+#divide all indices by their maximum - except NDSI ((NDSI + 1)/2) - (sensu Bradfer-Lawrence et al. 2020)
+#what about BGN? - using abs
+range02 <- function(x){abs(x)/max(abs(x))}
+ndsi_range <- function(x){(x+1)/2}
 
 acousticIndices_richness <- acousticIndices_richness %>% 
-  mutate_at(vars(matches("_mean")), range01) %>% 
-  mutate_at(vars(matches("_mean")), ~ replace(.x, which(.x == min(.x)), 0.00001)) %>% 
-  mutate_at(vars(matches("_mean")), ~ replace(.x, which(.x == max(.x)), 0.99999))
-
-
+  mutate_at(vars(matches("_mean"), -matches("NDSI")), range02) %>% 
+  #mutate_at(vars(matches("_mean")), ~ replace(.x, which(.x == min(.x)), 0.00001)) %>% 
+  mutate_at(vars(matches("_mean"), -matches("NDSI")), ~ replace(.x, which(.x == max(.x)), 0.99999)) %>% 
+  mutate_at(vars(matches("NDSI")), ndsi_range)
 
 # Mixed effects glmmTMB models --------------------------------------------
 
@@ -54,7 +64,7 @@ IndicesRichness_Combinations <- expand.grid(index = grep("mean", colnames(acoust
                                             taxa = unique(acousticIndices_richness$type),
                                             diversity = c("richness", "shannon", "count"))
 
-############UP TO HERE##############
+pb = txtProgressBar(min = 0, max = nrow(IndicesRichness_Combinations), initial = 0, style = 3) #progress bar for loop
 
 for (combination in 1:nrow(IndicesRichness_Combinations)) {
   currentAcousticIndex <- IndicesRichness_Combinations$index[combination]
@@ -63,7 +73,7 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
   
   data <- acousticIndices_richness %>% filter(type == currentTaxa)
   
-  Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]] <- glmmTMB(ACI_mean ~ richness + (1|Site) + (1|sampling.period),
+  Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]] <- glmmTMB(as.formula(paste0(currentAcousticIndex, " ~ ", currentDiversity, " + (1|Site) + (1|sampling.period)")),
                                                                                                               data = data,
                                                                                                               family = beta_family())
   
@@ -76,13 +86,15 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
   data$pred <- predict(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]], re.form=NA, type = "response")
   
   Plots_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]] <- data %>% 
-    ggplot(aes_string(x = paste0(currentAcousticIndex), y = paste0(currentDiversity))) +
-    geom_ribbon(aes_string(x = paste0(currentAcousticIndex), ymin = "lci", ymax = "uci"), fill = "black", alpha = 0.1) +
-    geom_line(aes_string(x = paste0(currentAcousticIndex), y = "pred"), color = "black", lwd = 1) +
+    ggplot(aes_string(x = paste0(currentDiversity), y = paste0(currentAcousticIndex))) +
+    geom_ribbon(aes_string(x = paste0(currentDiversity), ymin = "lci", ymax = "uci"), fill = "black", alpha = 0.1) +
+    geom_line(aes_string(x = paste0(currentDiversity), y = "pred"), color = "black", lwd = 1) +
     geom_point(size = 2) +
-    labs(x = gsub("_mean", "", paste0(currentAcousticIndex)), y = "Diversity Measure") +
+    labs(y = gsub("_mean", "", paste0(currentAcousticIndex)), x = "Diversity Measure") +
     theme_classic() +
-    theme(axis.title.y = element_blank())
+    theme(axis.title.x = element_blank())
+  
+  setTxtProgressBar(pb,combination)
 }
 
 # Arrange multi-panel plots -----------------------------------------------
@@ -91,15 +103,15 @@ plot_combinations <- unique(IndicesRichness_Combinations[,c('diversity','taxa')]
 
 for (combination in 1:nrow(plot_combinations)) {
   
-  ytitle <- if(plot_combinations$diversity[combination] == 'richness') {c("Species Richness")} else
+  xtitle <- if(plot_combinations$diversity[combination] == 'richness') {c("Species Richness")} else
     if(plot_combinations$diversity[combination] == 'shannon') {c("Shannon Diversity")} else
       if(plot_combinations$diversity[combination] == 'count') {c("Total Abundance")}
   
-  Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], ".*", plot_combinations$taxa[combination]), names(Plots_Indices_Richness))],
+  Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], ".*mean_", plot_combinations$taxa[combination]), names(Plots_Indices_Richness))],
                     ncol = 4) %>% 
     annotate_figure(top = paste0("glmmTMB_beta - AcousticIndices_", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination]),
-                    left = ytitle,
-                    bottom = "Acoustic Index")
+                    bottom = xtitle,
+                    left = "Acoustic Index")
   
   ggsave(filename = paste0("./outputs/figures.local/glmmTMB_beta/", Sys.Date(), "Plots_", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination], ".png"),
          plot = Plot,
@@ -116,15 +128,15 @@ indicesToUse <- c("ACI",
 
 for (combination in 1:nrow(plot_combinations)) {
   
-  ytitle <- if(plot_combinations$diversity[combination] == 'richness') {c("Species Richness")} else
+  xtitle <- if(plot_combinations$diversity[combination] == 'richness') {c("Species Richness")} else
     if(plot_combinations$diversity[combination] == 'shannon') {c("Shannon Diversity")} else
       if(plot_combinations$diversity[combination] == 'count') {c("Total Abundance")}
   
-  Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], "_(", paste0(indicesToUse, collapse = "|"), ")_.*", plot_combinations$taxa[combination]), names(Plots_Indices_Richness), value = T)],
+  Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], "_(", paste0(indicesToUse, collapse = "|"), ")_.*mean_", plot_combinations$taxa[combination]), names(Plots_Indices_Richness), value = T)],
                     ncol = 3) %>% 
     annotate_figure(top = paste0("glmmTMB_beta - AcousticIndices_", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination]),
-                    left = ytitle,
-                    bottom = "Acoustic Index")
+                    bottom = xtitle,
+                    left = "Acoustic Index")
   
   ggsave(filename = paste0("./outputs/figures/glmmTMB_beta/", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination], ".png"),
          plot = Plot,

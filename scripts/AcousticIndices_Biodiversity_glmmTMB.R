@@ -83,8 +83,8 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
                                                                                                                  FUN = function(x)predict(x, re.form=NA, type = "response"),
                                                                                                                  nsim = 100)
   
-  data$lci <- apply(Bootstrap_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]$t, 2, quantile, 0.025)
-  data$uci <- apply(Bootstrap_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]$t, 2, quantile, 0.975)
+  data$lci <- apply(Bootstrap_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]$t, 2, quantile, 0.025, na.rm = TRUE)
+  data$uci <- apply(Bootstrap_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]$t, 2, quantile, 0.975, na.rm = TRUE)
   data$pred <- predict(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]], re.form=NA, type = "response")
   
   Plots_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]] <- data %>% 

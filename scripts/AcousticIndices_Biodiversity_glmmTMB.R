@@ -45,10 +45,12 @@ acousticIndices_richness <- merge(acousticIndices_summary, richness[richness$day
 
 #divide all indices by their maximum - except NDSI ((NDSI + 1)/2) - (sensu Bradfer-Lawrence et al. 2020)
 #what about BGN? - using abs
+
 range02 <- function(x){abs(x)/max(abs(x))}
 ndsi_range <- function(x){(x+1)/2}
 
 acousticIndices_richness <- acousticIndices_richness %>% 
+  group_by(type) %>% #group_by to scale by taxa - frogs and birds use different indice values than all and not.birds
   mutate_at(vars(matches("_mean"), -matches("NDSI")), range02) %>% 
   #mutate_at(vars(matches("_mean")), ~ replace(.x, which(.x == min(.x)), 0.00001)) %>% 
   mutate_at(vars(matches("_mean"), -matches("NDSI")), ~ replace(.x, which(.x == max(.x)), 0.99999)) %>% 
@@ -90,6 +92,7 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
     geom_ribbon(aes_string(x = paste0(currentDiversity), ymin = "lci", ymax = "uci"), fill = "black", alpha = 0.1) +
     geom_line(aes_string(x = paste0(currentDiversity), y = "pred"), color = "black", lwd = 1) +
     geom_point(size = 2) +
+    scale_y_continuous(limits = c(plyr::round_any(min(data[currentAcousticIndex]), 0.1, f = floor), 1), labels = scales::label_number(accuracy = 0.1)) +
     labs(y = gsub("_mean", "", paste0(currentAcousticIndex)), x = "Diversity Measure") +
     theme_classic() +
     theme(axis.title.x = element_blank())
@@ -142,17 +145,3 @@ for (combination in 1:nrow(plot_combinations)) {
          plot = Plot,
          width = 22.5, height = 12.5, units = "cm", dpi = 1200)
 }
-
-
-
-
-
-lme4::bootMer(glmmTMB_model_richness,nsim=10,FUN=function(x) unlist(fixef(x)))
-
-
-glmmTMB_model_shannon <- glmmTMB(ACI_mean ~ shannon,
-                                  data = testData,
-                                  family = beta_family())
-
-AICcmodavg::aictab(cand.set = list(richness = glmmTMB_model_richness,
-                                   shannon = glmmTMB_model_shannon))

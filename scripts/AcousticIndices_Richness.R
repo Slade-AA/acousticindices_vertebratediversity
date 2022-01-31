@@ -43,6 +43,8 @@ IndicesRichness_Combinations <- expand.grid(index = grep("mean", colnames(acoust
                                             taxa = unique(acousticIndices_richness$type),
                                             diversity = c("richness", "shannon", "count"))
 
+pb = txtProgressBar(min = 0, max = nrow(IndicesRichness_Combinations), initial = 0, style = 3) #progress bar for loop
+
 for (combination in 1:nrow(IndicesRichness_Combinations)) {
   currentAcousticIndex <- IndicesRichness_Combinations$index[combination]
   currentTaxa <- IndicesRichness_Combinations$taxa[combination]
@@ -55,9 +57,9 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
                                                                                                                                   data = data)
   
   #Plot and save visual check of model assumptions
-  #png(filename = paste0("./outputs/model.checks/", currentDiversity, "_", currentAcousticIndex, "_", currentTaxa, ".png"), width = 30, height = 20, units = "cm", res = 800)
-  #print(performance::check_model(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]))
-  #dev.off()
+  png(filename = paste0("./outputs/model.checks/", currentDiversity, "_", currentAcousticIndex, "_", currentTaxa, ".png"), width = 30, height = 20, units = "cm", res = 800)
+  print(performance::check_model(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]]))
+  dev.off()
   
   #Model-based (Semi-)Parametric Bootstrap for Mixed Models - Used to calculate confidence intervals
   Bootstrap_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]] <- bootMer(Models_Indices_Richness[[paste0(currentDiversity, "_", currentAcousticIndex, "_", currentTaxa)]],
@@ -88,6 +90,8 @@ for (combination in 1:nrow(IndicesRichness_Combinations)) {
     labs(x = gsub("_mean", "", paste0(currentAcousticIndex)), y = "Diversity Measure") +
     theme_classic() +
     theme(axis.title.y = element_blank())
+  
+  setTxtProgressBar(pb,combination)
 }
 
 
@@ -101,7 +105,7 @@ for (combination in 1:nrow(plot_combinations)) {
     if(plot_combinations$diversity[combination] == 'shannon') {c("Shannon Diversity")} else
       if(plot_combinations$diversity[combination] == 'count') {c("Total Abundance")}
   
-  Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], ".*", plot_combinations$taxa[combination]), names(Plots_Indices_Richness))],
+  Plot <- plot_grid(plotlist = Plots_Indices_Richness[grep(paste0(plot_combinations$diversity[combination], ".*mean_", plot_combinations$taxa[combination]), names(Plots_Indices_Richness))],
                     ncol = 4) %>% 
     annotate_figure(top = paste0("lmer - AcousticIndices_", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination]),
                     left = ytitle,
@@ -132,7 +136,7 @@ for (combination in 1:nrow(plot_combinations)) {
                     left = ytitle,
                     bottom = "Acoustic Index")
   
-  ggsave(filename = paste0("./outputs/figures/", plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination], ".png"),
+  ggsave(filename = paste0("./outputs/figures/", Sys.Date(), plot_combinations$taxa[combination], "_", plot_combinations$diversity[combination], ".png"),
          plot = Plot,
          width = 22.5, height = 12.5, units = "cm", dpi = 1200)
 }

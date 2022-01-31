@@ -145,6 +145,42 @@ ggsave("outputs/figures/bootstrap_correlations_bytaxa.png",
        width = 24, height = 24, units = "cm", dpi = 800)
 
 
+#plot facetted by taxa - all indices
+correlationPlots <- list()
+for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
+  tmp_data <- bootCor_results[bootCor_results$Taxa == taxa,]
+  tmp_data$Measure <- factor(tmp_data$Measure, levels = c("richness", "shannon", "count"))
+  
+  correlationPlots[[taxa]] <- ggplot(data = tmp_data, aes(x = Mean, y = Index, group = Measure, colour = Measure)) +
+    geom_vline(xintercept = 0, linetype = 'dashed') +
+    geom_pointrange(aes(xmin = Low, xmax = High), position = position_dodge(width = 0.4)) +
+    scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, 0.4)) +
+    scale_color_viridis_d(labels = c('Richness', 'Shannon', 'Count')) +
+    labs(x = "Mean correlation") +
+    theme_classic() +
+    theme(axis.title = element_blank(),
+          legend.position = "none")
+}
+
+legend_bottom <- get_legend(
+  correlationPlots[['birds']] + 
+    guides(color = guide_legend(nrow = 1)) +
+    theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
+)
+
+correlationPlot <- plot_grid(plotlist = correlationPlots,
+                             ncol = 2,
+                             labels = c(paste0("a) ", names(correlationPlots)[1]),
+                                        paste0("b) ", names(correlationPlots)[2]),
+                                        paste0("c) ", names(correlationPlots)[3]),
+                                        paste0("d) ", names(correlationPlots)[4])),
+                             hjust = 0, label_x = 0.12) %>% 
+  annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
+  plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
+
+ggsave("outputs/figures/bootstrap_correlations_bytaxa_allindices.png",
+       correlationPlot,
+       width = 24, height = 24, units = "cm", dpi = 800)
 
 
 # Create table of correlation values --------------------------------------

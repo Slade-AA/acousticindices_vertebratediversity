@@ -14,8 +14,15 @@ audioDirs <- audioDirs[grep("^G:/audio_recorder_downloads_trip2_wavs/_.*", audio
 audioFiles <- list.files(audioDirs, full.names = TRUE, recursive = TRUE)
 
 #Set the frequency limits to use
-#aciLimits <- c(0, 0) #default is c(0, 0)
-aciLimits <- list(default = c(0, 0), low = c(1000, 4000), mid = c(3000, 6000), high = c(5000, 8000))
+#aciLimits <- list(default = c(0, 0)) #default is c(0, 0)
+#aciLimits <- list(low = c(1000, 4000), mid = c(3000, 6000), high = c(5000, 8000))
+aciLimits <- list(#f01 = c(1000, 2000),
+                  f02 = c(2000, 3000),
+                  f03 = c(3000, 4000),
+                  f04 = c(4000, 5000),
+                  f05 = c(5000, 6000),
+                  f06 = c(6000, 7000),
+                  f07 = c(7000, 8000))
 
 
 # Generate indices ----------------------------------------------------------

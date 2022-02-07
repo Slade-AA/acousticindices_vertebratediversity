@@ -10,23 +10,47 @@ library(viridis)
 
 setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindices_vertebratediversity")
 
-files <- list.files(path = "./rawdata/acousticindices/allindices",
-                    pattern = "acousticindex.csv$",
-                    full.names = TRUE, 
-                    recursive = TRUE)
+#all indices - general settings
+files_all <- list.files(path = "./rawdata/acousticindices/allindices",
+                        pattern = "acousticindex.csv$",
+                        full.names = TRUE, 
+                        recursive = TRUE)
 
-acousticIndices <- lapply(files, read_csv)
-names(acousticIndices) <- c("fall.2021", "spring.2021")
-acousticIndices <- bind_rows(acousticIndices, .id = "sampling.period")
-acousticIndices$sampling.period <- factor(acousticIndices$sampling.period)
+acousticIndices_all <- lapply(files_all, read_csv)
+names(acousticIndices_all) <- c("fall.2021", "spring.2021")
+acousticIndices_all <- bind_rows(acousticIndices_all, .id = "sampling.period")
+acousticIndices_all$sampling.period <- factor(acousticIndices_all$sampling.period)
+
+#aci index - different frequency bands
+files_aci <- list.files(path = "./rawdata/acousticindices/acionly",
+                        pattern = "acousticindex.csv$",
+                        full.names = TRUE, 
+                        recursive = TRUE)
+acousticIndices_aci <- lapply(files_aci, read_csv)
+names(acousticIndices_aci) <- paste0(gsub(".*acionly\\/(.*)\\/2.*", "\\1", dirname(files_aci)), "_", 
+                                     gsub(".*ACI", "", dirname(files_aci)))
+acousticIndices_aci <- lapply(seq_along(acousticIndices_aci), function(i) acousticIndices_aci[[i]] %>% rename(!!paste0("ACI_",gsub(".*2021_(.*)$", "\\1", names(acousticIndices_aci)[i])) := ACI))
+names(acousticIndices_aci) <- paste0(gsub(".*acionly\\/(.*)\\/2.*", "\\1", dirname(files_aci)), "_", 
+                                     gsub(".*ACI", "", dirname(files_aci)))
+
+acousticIndices_aci <- bind_rows(list(fall.2021 = acousticIndices_aci[grep("fall", names(acousticIndices_aci))] %>% reduce(full_join, by = grep("ACI*", colnames(acousticIndices_aci[[1]]), value = TRUE, invert = TRUE)),
+                                      spring.2021 = acousticIndices_aci[grep("spring", names(acousticIndices_aci))] %>% reduce(full_join, by = grep("ACI*", colnames(acousticIndices_aci[[1]]), value = TRUE, invert = TRUE))),
+                                 .id = "sampling.period")
+acousticIndices_aci$sampling.period <- factor(acousticIndices_aci$sampling.period)
+
+#merge all acoustic indices with aci indices
+acousticIndices_all$Site <- factor(gsub("G:\\\\.*\\\\(.+?)_.*", "\\1", acousticIndices_all$FOLDER))
+acousticIndices_all$Sensor <- factor(gsub(".*[0-9|ING]\\\\(.+?)\\\\.*", "\\1", acousticIndices_all$FOLDER))
+
+acousticIndices_aci$Site <- factor(gsub("G:\\\\.*\\\\(.+?)_.*", "\\1", acousticIndices_aci$FOLDER))
+acousticIndices_aci$Sensor <- factor(gsub(".*[0-9|ING]\\\\(.+?)\\\\.*", "\\1", acousticIndices_aci$FOLDER))
+
+acousticIndices <- full_join(acousticIndices_all, acousticIndices_aci, by = c('sampling.period', 'IN FILE', 'CHANNEL', 'OFFSET', 'DURATION', 'DATE', 'TIME', 'HOUR', 'Site', 'Sensor'))
 
 
-#remove any rows with durations less than 59 seconds? - from short recordings?
-acousticIndices <- acousticIndices[!acousticIndices$DURATION < 59,]
 
-acousticIndices$Site <- factor(gsub("G:\\\\.*\\\\(.+?)_.*", "\\1", acousticIndices$FOLDER))
-
-acousticIndices$Sensor <- factor(gsub(".*[0-9|ING]\\\\(.+?)\\\\.*", "\\1", acousticIndices$FOLDER))
+#remove any rows with durations less than 58 seconds? - from short recordings?
+acousticIndices <- acousticIndices[!acousticIndices$DURATION < 58,]
 
 
 #create proper date time column

@@ -13,6 +13,11 @@ EVN?
   - Check whether I should be running glmer for some analyses -
     fitdistrplus (zero-inflated beta distribution for frogs?)
 
+##### Table of Contents
+
+[Species richness](#species-richness)  
+[Shannon diversity index](#shannon-diversity-index)
+
 ## Results
 
 ### Species richness

@@ -38,7 +38,9 @@ acousticIndices_aci <- bind_rows(list(fall.2021 = acousticIndices_aci[grep("fall
                                  .id = "sampling.period")
 acousticIndices_aci$sampling.period <- factor(acousticIndices_aci$sampling.period)
 
-#merge all acoustic indices with aci indices
+
+# Merge all acoustic indices with aci indices -----------------------------
+
 acousticIndices_all$Site <- factor(gsub("G:\\\\.*\\\\(.+?)_.*", "\\1", acousticIndices_all$FOLDER))
 acousticIndices_all$Sensor <- factor(gsub(".*[0-9|ING]\\\\(.+?)\\\\.*", "\\1", acousticIndices_all$FOLDER))
 
@@ -48,6 +50,7 @@ acousticIndices_aci$Sensor <- factor(gsub(".*[0-9|ING]\\\\(.+?)\\\\.*", "\\1", a
 acousticIndices <- full_join(acousticIndices_all, acousticIndices_aci, by = c('sampling.period', 'IN FILE', 'CHANNEL', 'OFFSET', 'DURATION', 'DATE', 'TIME', 'HOUR', 'Site', 'Sensor'))
 
 
+# Data cleaning and new columns -------------------------------------------
 
 #remove any rows with durations less than 58 seconds? - from short recordings?
 acousticIndices <- acousticIndices[!acousticIndices$DURATION < 58,]
@@ -67,20 +70,23 @@ acousticIndices$DATETIME <- round_date(acousticIndices$DATETIME, "1 minute")
 #extract hour and 1 min interval from datetime
 acousticIndices$TIME_NEW <- strftime(acousticIndices$DATETIME, format = "%H:%M:%S")
 
-#Only keep data corresponding to 7-day period of biodiversity surveys (i.e. 12pm first survey day to 12pm last survey day)
-
-acousticIndices <- rbind(acousticIndices %>% filter(Site == "Duval" & DATETIME >= "2021-04-18 12:00:00" & DATETIME < "2021-04-25 12:00:00"), #fall.2021
-                         acousticIndices %>% filter(Site == "Mourachan" & DATETIME >= "2021-05-09 12:00:00" & DATETIME < "2021-05-16 12:00:00"),
-                         acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-06-14 12:00:00" & DATETIME < "2021-06-21 12:00:00"),
-                         acousticIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-04-29 12:00:00" & DATETIME < "2021-05-06 12:00:00"),
-                         acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-06-03 12:00:00" & DATETIME < "2021-06-10 12:00:00"),
-                         acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-07-05 12:00:00" & DATETIME < "2021-07-12 12:00:00"),
-                         acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-10-09 12:00:00" & DATETIME < "2021-10-16 12:00:00"), #spring.2021
-                         acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-09-29 12:00:00" & DATETIME < "2021-10-06 12:00:00"),
-                         acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-11-09 12:00:00" & DATETIME < "2021-11-16 12:00:00"))
-
-acousticIndices %>% group_by(sampling.period, Site) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
 
 
-#save aggreagated data
-save(acousticIndices, file = paste0("./outputs/data/", Sys.Date(), "_acousticIndices.RData"))
+# Subset indices to survey periods ----------------------------------------
+
+acousticIndices_surveys <- rbind(acousticIndices %>% filter(Site == "Duval" & DATETIME >= "2021-04-18 12:00:00" & DATETIME < "2021-04-25 12:00:00"), #fall.2021
+                                 acousticIndices %>% filter(Site == "Mourachan" & DATETIME >= "2021-05-09 12:00:00" & DATETIME < "2021-05-16 12:00:00"),
+                                 acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-06-14 12:00:00" & DATETIME < "2021-06-21 12:00:00"),
+                                 acousticIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-04-29 12:00:00" & DATETIME < "2021-05-06 12:00:00"),
+                                 acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-06-03 12:00:00" & DATETIME < "2021-06-10 12:00:00"),
+                                 acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-07-05 12:00:00" & DATETIME < "2021-07-12 12:00:00"),
+                                 acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-10-09 12:00:00" & DATETIME < "2021-10-16 12:00:00"), #spring.2021
+                                 acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-09-29 12:00:00" & DATETIME < "2021-10-06 12:00:00"),
+                                 acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-11-09 12:00:00" & DATETIME < "2021-11-16 12:00:00"))
+
+acousticIndices_surveys %>% group_by(sampling.period, Site) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
+
+
+# Export data set ---------------------------------------------------------
+
+save(acousticIndices_surveys, file = paste0("./outputs/data/", Sys.Date(), "_acousticIndices.RData"))

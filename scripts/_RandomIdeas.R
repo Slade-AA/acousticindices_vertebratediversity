@@ -97,3 +97,102 @@ fviz_pca_var(pca.all,
              repel = TRUE,
              title = NULL,
              ggtheme = theme_classic()) + ggtitle(NULL) + coord_cartesian() + theme(legend.position = c(0.3, 0.3), legend.background = element_blank(), legend.key.width = unit(0.5, "cm"), legend.key.size = unit(0.5, "cm"))
+
+
+
+
+
+
+
+
+# quantile regression random forest for prediction intervals
+
+library(quantregForest)
+
+control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, verbose = FALSE, savePredictions = TRUE)
+tunegrid <- expand.grid(.mtry=c(2:10))
+
+
+RandomForestQuantRegFits <- list()
+RandomForestQuantRegPerformance <- data.frame(taxa = character(),
+                                              measure = character(),
+                                              ACItype = character(),
+                                              mtry = numeric(),
+                                              RMSE = numeric(),
+                                              Rsquared = numeric(),
+                                              MAE = numeric(),
+                                              RMSESD = numeric(),
+                                              RsquaredSD = numeric(),
+                                              MAESD = numeric(),
+                                              minResponse = numeric(),
+                                              meanResponse = numeric(),
+                                              maxResponse = numeric())
+RandomForestQuantRegImportance <- list()
+
+for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
+  tmpdata <- acousticIndices_richness[acousticIndices_richness$type == taxa,]
+  
+  for (measure in c("richness", "shannon", "count")) {
+    
+    formulas <- list(totalACI = as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))),
+                     ACI_3kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))))
+    
+    #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
+    #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
+    for (formula in 1:length(formulas)) {
+      
+      RandomForestQuantRegFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]] <- train(formulas[[formula]],
+                                                                                                       data = tmpdata,
+                                                                                                       method = "qrf",
+                                                                                                       trControl = control,
+                                                                                                       importance = TRUE,
+                                                                                                       allowParallel = TRUE,
+                                                                                                       tuneGrid = tunegrid,
+                                                                                                       ntree = 1000,
+                                                                                                       keep.inbag = TRUE)
+      
+      RandomForestQuantRegPerformance <- rbind(RandomForestQuantRegPerformance, data.frame(cbind(taxa = taxa, 
+                                                                                                 measure = measure, 
+                                                                                                 ACItype = names(formulas)[[formula]],
+                                                                                                 RandomForestQuantRegFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]]$results[RandomForestQuantRegFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]]$results$mtry == RandomForestQuantRegFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]]$bestTune[[1]],],
+                                                                                                 minResponse = min(tmpdata[measure]),
+                                                                                                 meanResponse = mean(tmpdata[[measure]]),
+                                                                                                 maxResponse = max(tmpdata[measure]))))
+      
+      RandomForestQuantRegImportance[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]] <- varImp(RandomForestQuantRegFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]])
+    }
+  }
+}
+
+#Normalize RMSE and MAE, calculate Scatter Index
+RandomForestQuantRegPerformance <- RandomForestQuantRegPerformance %>% mutate(normRMSE = RMSE/(maxResponse-minResponse),
+                                                                              normMAE = MAE/(maxResponse-minResponse),
+                                                                              SI = (RMSE/meanResponse)*100)
+
+
+
+
+#observed vs predicted plot
+test <- data.frame(predictions = predict(RandomForestQuantRegFits$birds_count_totalACI$finalModel),
+                   observations = acousticIndices_richness$count[acousticIndices_richness$type == 'birds'])
+
+ggplot(test, aes(x = observations, y = predictions)) +
+  geom_point() +
+  scale_x_continuous(limits = c(min(test), max(test))) +
+  scale_y_continuous(limits = c(min(test), max(test))) +
+  geom_abline(slope = 1) +
+  theme_bw()
+
+
+
+
+test2 <- data.frame(cbind(predict(RandomForestQuantRegFits$birds_count_totalACI$finalModel),
+                          observations = acousticIndices_richness$count[acousticIndices_richness$type == 'birds']))
+
+ggplot(test2, aes(x = observations, y = quantile..0.5)) +
+  geom_ribbon(aes(x = observations, ymin = quantile..0.1, ymax = quantile..0.9)) +
+  geom_point() +
+  scale_x_continuous(limits = c(min(test), max(test))) +
+  scale_y_continuous(limits = c(min(test), max(test))) +
+  geom_abline(slope = 1) +
+  theme_bw()

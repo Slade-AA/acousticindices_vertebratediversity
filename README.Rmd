@@ -15,6 +15,10 @@ Six different acoustic indices were used: ACI, ADI, AEI, BI, NDSI and EVN?
 * Rerun analyses with recleaned dataset (waiting on Seb and Don)
 * Check whether I should be running glmer for some analyses - fitdistrplus (zero-inflated beta distribution for frogs?)
 
+##### Table of Contents  
+[Species richness](#species-richness)  
+[Shannon diversity index](#shannon-diversity-index)
+
 ## Results
 
 ### Species richness

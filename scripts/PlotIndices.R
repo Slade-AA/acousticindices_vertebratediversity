@@ -1,9 +1,23 @@
+# Load packages -----------------------------------------------------------
+
+library(tidyverse)
+library(ggpubr)
+library(cowplot)
+library(viridis)
+
+# Load data ---------------------------------------------------------------
+
+files <- file.info(list.files("./outputs/data/", pattern = ".*_acousticIndices_surveys.RData$", full.names = TRUE)) #list files
+latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
+
+load(latestFile)
+
 # Create plots ------------------------------------------------------------
 
-SamplingTrips <- unique(acousticIndices[c("Site", "sampling.period")])
+SamplingTrips <- unique(acousticIndices_surveys[c("Site", "sampling.period")])
 
 for (trip in 1:nrow(SamplingTrips)) {
-  data <- acousticIndices[acousticIndices$Site == SamplingTrips$Site[trip] & acousticIndices$sampling.period == SamplingTrips$sampling.period[trip],]
+  data <- acousticIndices_surveys[acousticIndices_surveys$Site == SamplingTrips$Site[trip] & acousticIndices_surveys$sampling.period == SamplingTrips$sampling.period[trip],]
   
   
   Plot_ACI <- ggplot(data = data,
@@ -93,7 +107,7 @@ for (trip in 1:nrow(SamplingTrips)) {
   # of the height of one plot (via rel_heights).
   Plots_Combined <- plot_grid(Plots_Combined, legend_b, ncol = 1, rel_heights = c(1, .1))
   
-  ggsave(filename = paste0("./outputs/figures/", Sys.Date(), "_", SamplingTrips$Site[trip], "_", SamplingTrips$sampling.period[trip], ".png"),
+  ggsave(filename = paste0("./outputs/figures/timeseries/", Sys.Date(), "_", SamplingTrips$Site[trip], "_", SamplingTrips$sampling.period[trip], ".png"),
          plot = Plots_Combined,
-         width = 15, height = 20, units = "cm", dpi = 1200)
+         width = 15, height = 20, units = "cm", dpi = 1000)
 }

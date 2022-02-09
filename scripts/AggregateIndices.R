@@ -2,9 +2,6 @@
 
 library(tidyverse)
 library(lubridate)
-library(ggpubr)
-library(cowplot)
-library(viridis)
 
 # Read in and clean indices -----------------------------------------------
 

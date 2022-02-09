@@ -7,7 +7,7 @@ library(viridis)
 
 # Load data ---------------------------------------------------------------
 
-files <- file.info(list.files("./outputs/data/", pattern = ".*_acousticIndices_surveys.RData$", full.names = TRUE)) #list files
+files <- file.info(list.files("./outputs/data/", pattern = ".*_acousticIndices.RData$", full.names = TRUE)) #list files
 latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
 
 load(latestFile)

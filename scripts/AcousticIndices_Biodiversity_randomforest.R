@@ -14,8 +14,13 @@ library(caret)
 
 setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindices_vertebratediversity")
 
-load("./outputs/data/2022-02-07_acousticIndices_summary.RData") #load indices
+#summary indices
+files <- file.info(list.files("./outputs/data/", pattern = ".*_acousticIndices_summary.RData$", full.names = TRUE)) #list files
+latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
 
+load(latestFile)
+
+#richness
 richness <- read_csv("./rawdata/biodiversity/richness_diversity_updated.csv") #load richness
 
 #format richness to match indices

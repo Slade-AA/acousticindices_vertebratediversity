@@ -13,7 +13,7 @@ EVN?
   - Check whether I should be running glmer for some analyses -
     fitdistrplus (zero-inflated beta distribution for frogs?)
 
-##### Table of Contents
+# Table of Contents
 
 [Species richness](#species-richness)  
 [Shannon diversity index](#shannon-diversity-index)
@@ -43,3 +43,11 @@ Correlation between total bird abundance and various acoustic indices
 
 Correlation between total frog abundance and various acoustic indices
 ![Alt text](outputs/figures/frogs_count.png)
+
+### Bird diversity vs acoustic indices (morning, day, all)
+
+There was little difference in the predictive performance of random
+forest models on bird biodiversity when using acoustic indices
+calculated for all recordings, morning recordings (6am-9am), or day
+recordings (6am-6pm). ![Alt
+text](outputs/figures/randomforestperformance/Birds_MorningDayAll.png)

@@ -24,7 +24,7 @@ load(latestFile)
 richness <- read_csv("./rawdata/biodiversity/richness_diversity_updated.csv") #load richness
 
 #format richness to match indices
-richness <- richness %>% rename(Site = site, Sensor = original.plot, richness = Richness, shannon = Shannon, type = comparison)
+richness <- richness %>% rename(Site = site, Sensor = original.plot, richness = Richness, shannon = Shannon, type = taxa)
 richness <- richness %>% mutate(sampling.period = paste0(season, ".2021"))
 richness <- richness %>% mutate(type = recode(type,
                                               'bird' = 'birds', 'frog' = 'frogs'))
@@ -83,16 +83,18 @@ RandomForestPerformance <- data.frame(comparison = character(),
                                       maxResponse = numeric())
 RandomForestImportance <- list()
 
+pb = txtProgressBar(min = 0, max = length(unique(acousticIndices_richness$type)) * 3 * 3, initial = 0, style = 3); k <- 0
+
 for (comparison in unique(acousticIndices_richness$type)) {
   tmpdata <- acousticIndices_richness[acousticIndices_richness$type == comparison,]
   
   for (measure in c("richness", "shannon", "count")) {
     
+    #forumlas for using just total ACI, 3kHz ACI, and 1kHz ACI values
     formulas <- list(totalACI = as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))),
-                     ACI_3kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))))
+                     ACI_3kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))),
+                     ACI_1kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_4.|ACI_3000_6.|ACI_5000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))))
     
-    #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
-    #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
     for (formula in 1:length(formulas)) {
       
       RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- train(formulas[[formula]],
@@ -113,6 +115,8 @@ for (comparison in unique(acousticIndices_richness$type)) {
                                                                                  maxResponse = max(tmpdata[measure]))))
       
       RandomForestImportance[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- varImp(RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]])
+      
+      k <- k+1; setTxtProgressBar(pb, k)
     }
   }
 }
@@ -120,46 +124,102 @@ for (comparison in unique(acousticIndices_richness$type)) {
 #Normalize RMSE and MAE, calculate Scatter Index
 RandomForestPerformance <- RandomForestPerformance %>% mutate(normRMSE = RMSE/(maxResponse-minResponse),
                                                               normMAE = MAE/(maxResponse-minResponse),
-                                                              SI = (RMSE/meanResponse)*100)
+                                                              SI = (RMSE/meanResponse)*100,
+                                                              normRMSE_SE = RMSESD/(maxResponse-minResponse)/sqrt(30),
+                                                              normMAE_SE = MAESD/(maxResponse-minResponse)/sqrt(30),
+                                                              SI_SE = (RMSESD/meanResponse)*100/sqrt(30),
+                                                              Rsquared_SE = RsquaredSD/sqrt(30))
 
 # Plot random forest performance ------------------------------------------
 
-#compare ACI type
+#compare rf models with different ACI bands used as predictors
 ggplot(data = RandomForestPerformance, aes(x = measure, y = normRMSE, group = ACItype, fill = ACItype)) +
-  geom_col(position = "dodge") +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = normRMSE-normRMSE_SE, ymax = normRMSE+normRMSE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised RMSE") +
   facet_wrap(~comparison) +
   theme_bw()
 
-
-Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = normRMSE, group = measure, fill = measure)) +
-  geom_col(position = "dodge") +
+#compare bird indices comparisons - using totalACI rf models
+Plot_RMSE_birds <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' & RandomForestPerformance$comparison %in% grep("^birds*", RandomForestPerformance$comparison, value = TRUE),], 
+                          aes(x = measure, y = normRMSE, group = comparison, fill = comparison)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = normRMSE-normRMSE_SE, ymax = normRMSE+normRMSE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised RMSE") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = normMAE, group = measure, fill = measure)) +
-  geom_col(position = "dodge") +
+Plot_SI_birds <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' & RandomForestPerformance$comparison %in% grep("^birds*", RandomForestPerformance$comparison, value = TRUE),], 
+                        aes(x = measure, y = SI, group = comparison, fill = comparison)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = SI-SI_SE, ymax = SI+SI_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
+  scale_fill_viridis_d() +
+  scale_y_continuous(limits = c(0, 100)) +
+  labs(x = "Taxa", y = "Scatter Index") +
+  theme_bw() +
+  theme(legend.position = "none")
+Plot_R2_birds <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' & RandomForestPerformance$comparison %in% grep("^birds*", RandomForestPerformance$comparison, value = TRUE),], 
+                        aes(x = measure, y = Rsquared, group = comparison, fill = comparison)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = Rsquared-Rsquared_SE, ymax = Rsquared+Rsquared_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
+  scale_fill_viridis_d() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Taxa", y = "R squared") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+legend_bottom <- get_legend(
+  Plot_R2_birds + 
+    guides(color = guide_legend(nrow = 1)) +
+    theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
+)
+
+Plot_Birds_Time <- plot_grid(Plot_RMSE_birds, Plot_SI_birds, Plot_R2_birds, legend_bottom,
+                             ncol = 2)
+                             #rel_heights = c(1, 1, 1, 0.1))
+ggsave(filename = "outputs/figures/randomforestperformance/Birds_MorningDayAll.png",
+       plot = Plot_Birds_Time,
+       width = 24, height = 20, units = "cm", dpi = 800)
+
+
+#plot performance measures for all comparisons - totalACI
+Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+                    aes(x = comparison, y = normRMSE, group = measure, fill = measure)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = normRMSE-normRMSE_SE, ymax = normRMSE+normRMSE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
+  scale_fill_viridis_d() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Taxa", y = "Normalised RMSE") +
+  theme_bw() +
+  theme(legend.position = "none")
+Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+                   aes(x = comparison, y = normMAE, group = measure, fill = measure)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = normMAE-normMAE_SE, ymax = normMAE+normMAE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised MAE") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_R2 <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = Rsquared, group = measure, fill = measure)) +
-  geom_col(position = "dodge") +
+Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+                  aes(x = comparison, y = SI, group = measure, fill = measure)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = SI-SI_SE, ymax = SI+SI_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
+  scale_fill_viridis_d() +
+  scale_y_continuous(limits = c(0, 120)) +
+  labs(x = "Taxa", y = "Scatter Index") +
+  theme_bw() +
+  theme(legend.position = "none")
+Plot_R2 <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+                  aes(x = comparison, y = Rsquared, group = measure, fill = measure)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = Rsquared-Rsquared_SE, ymax = Rsquared+Rsquared_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "R Squared") +
-  theme_bw() +
-  theme(legend.position = "none")
-Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = SI, group = measure, fill = measure)) +
-  geom_col(position = "dodge") +
-  scale_fill_viridis_d() +
-  scale_y_continuous(limits = c(0, 100)) +
-  labs(x = "Taxa", y = "Scatter Index") +
   theme_bw() +
   theme(legend.position = "none")
 
@@ -169,9 +229,9 @@ legend_bottom <- get_legend(
     theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
 )
 
-plot_grid(Plot_MAE, Plot_R2, legend_bottom,
+plot_grid(Plot_MAE, Plot_SI, Plot_R2, legend_bottom,
           ncol = 1,
-          rel_heights = c(1, 1, 0.1))
+          rel_heights = c(1, 1, 1, 0.1))
 
 # Variable importance -----------------------------------------------------
 
@@ -219,7 +279,8 @@ egg::ggarrange(as_ggplot(text_grob(label = "richness")),
   annotate_figure(bottom = "Overall",
                   left = "Acoustic Index")
 
-
+#save everything in environment for later loading
+save.image(file = "outputs/workspaces/RandomForest.RData")
 
 
 # Random forest using party and conditional importance --------------------
@@ -244,46 +305,45 @@ RandomForestPerformance_cforest <- data.frame(comparison = character(),
 RandomForestImportance_cforest <- list()
 RandomForestImportance_cforest_conditional <- list()
 
+pb = txtProgressBar(min = 0, max = length(unique(acousticIndices_richness$type)) * 3 * 3, initial = 0, style = 3); k <- 0
+
 for (comparison in unique(acousticIndices_richness$type)) {
   tmpdata <- acousticIndices_richness[acousticIndices_richness$type == comparison,]
   
   for (measure in c("richness", "shannon", "count")) {
     
+    #forumlas for using just total ACI, 3kHz ACI, and 1kHz ACI values
     formulas <- list(totalACI = as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))),
-                     ACI_3kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))))
+                     ACI_3kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))),
+                     ACI_1kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_4.|ACI_3000_6.|ACI_5000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))))
     
-    #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
-    #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
     for (formula in 1:length(formulas)) {
       
-      RandomForestFits_cforest[[paste0(comparison, "_", measure)]] <- train(formulas[[formula]],
-                                                                      data = tmpdata,
-                                                                      method = "cforest",
-                                                                      trControl = control,
-                                                                      tuneGrid = tunegrid,
-                                                                      controls = cforest_unbiased(ntree = 1000))
+      RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- train(formulas[[formula]],
+                                                                            data = tmpdata,
+                                                                            method = "cforest",
+                                                                            trControl = control,
+                                                                            tuneGrid = tunegrid,
+                                                                            controls = cforest_unbiased(ntree = 1000))
       
       RandomForestPerformance_cforest <- rbind(RandomForestPerformance_cforest, data.frame(cbind(comparison = comparison, 
                                                                                                  measure = measure, 
                                                                                                  ACItype = names(formulas)[[formula]],
-                                                                                                 RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$results[RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$results$mtry == RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$bestTune[[1]],],
+                                                                                                 RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$results[RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$results$mtry == RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$bestTune[[1]],],
                                                                                                  minResponse = min(tmpdata[measure]),
                                                                                                  meanResponse = mean(tmpdata[[measure]]),
                                                                                                  maxResponse = max(tmpdata[measure]))))
       
-      RandomForestImportance_cforest[[paste0(comparison, "_", measure)]] <- varImp(RandomForestFits_cforest[[paste0(comparison, "_", measure)]])
-      RandomForestImportance_cforest_conditional[[paste0(comparison, "_", measure)]] <- permimp(RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$finalModel, conditional = TRUE)
+      RandomForestImportance_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- varImp(RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]])
+      RandomForestImportance_cforest_conditional[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- permimp(RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$finalModel, conditional = TRUE, progressBar = FALSE)
+      
+      k <- k+1; setTxtProgressBar(pb, k)
+      
     }
   }
 }
 
-
-
-cf_model <- cforest(formula,
-                    data = tmpdata,
-                    controls = cforest_unbiased(mtry = 4, ntree = 1000, minbucket = 1, minsplit = 3))
-CPI <- permimp(cf_model, conditional = TRUE)
-#plot(CPI, type = "bar", interval = "quantile")
-plot(CPI, type = "box", horizontal = TRUE)
-
-cforestStats(cf_model)
+#Normalize RMSE and MAE, calculate Scatter Index
+RandomForestPerformance_cforest <- RandomForestPerformance_cforest %>% mutate(normRMSE = RMSE/(maxResponse-minResponse),
+                                                                              normMAE = MAE/(maxResponse-minResponse),
+                                                                              SI = (RMSE/meanResponse)*100)

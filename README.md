@@ -9,40 +9,22 @@ EVN?
 
 ## To do
 
-  - Rerun analyses with recleaned dataset (waiting on Seb and Don)
-  - Check whether I should be running glmer for some analyses -
-    fitdistrplus (zero-inflated beta distribution for frogs?)
-
+  - 
 # Table of Contents
 
-[Species richness](#species-richness)  
-[Shannon diversity index](#shannon-diversity-index)
+[Bootstrap correlations](#bootstrap-correlations) | [Different ACI
+frequency bands](#different-aci-frequency-bands) [Random forest
+models](#random-forest-models) | [Bird diversity (morning, day,
+all)](#bird-diversity-vs-acoustic-indices-morning-day-all)
 
-## Results
+## Bootstrap correlations
 
-### Species richness
+### Different ACI frequency bands
 
-Correlation between bird species richness and various acoustic indices
-![Alt text](outputs/figures/birds_richness.png)
+![Alt
+text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_bytaxa_allindices.png)
 
-Correlation between frog species richness and various acoustic indices
-![Alt text](outputs/figures/frogs_richness.png)
-
-### Shannon diversity index
-
-Correlation between shannon diversity index for birds and various
-acoustic indices ![Alt text](outputs/figures/birds_shannon.png)
-
-Correlation between shannon diversity index for frogs and various
-acoustic indices ![Alt text](outputs/figures/frogs_shannon.png)
-
-### Total abundance
-
-Correlation between total bird abundance and various acoustic indices
-![Alt text](outputs/figures/birds_count.png)
-
-Correlation between total frog abundance and various acoustic indices
-![Alt text](outputs/figures/frogs_count.png)
+## Random forest models
 
 ### Bird diversity vs acoustic indices (morning, day, all)
 

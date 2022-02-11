@@ -10,7 +10,7 @@ library(caret)
 
 #WHAT ABOUT XGBOOST!!!!
 
-# Load indices and richness data, merge -----------------------------------
+# Load indices and biodiversity data --------------------------------------
 
 setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindices_vertebratediversity")
 
@@ -24,19 +24,43 @@ load(latestFile)
 richness <- read_csv("./rawdata/biodiversity/richness_diversity_updated.csv") #load richness
 
 #format richness to match indices
-richness <- richness %>% rename(Site = site, Sensor = original.plot, richness = Richness, shannon = Shannon, type = taxa)
-#richness$Sensor <- gsub(" ", "", richness$Sensor) #now redundant?
+richness <- richness %>% rename(Site = site, Sensor = original.plot, richness = Richness, shannon = Shannon, type = comparison)
 richness <- richness %>% mutate(sampling.period = paste0(season, ".2021"))
 richness <- richness %>% mutate(type = recode(type,
                                               'bird' = 'birds', 'frog' = 'frogs'))
 
-#duplicate indices 'all' and rename to 'not.birds' for comparison to all other species
-acousticIndices_summary <- rbind(acousticIndices_summary, 
-                                 acousticIndices_summary %>% filter(type == 'all') %>% mutate(type = recode(type, 'all' = 'not.birds')))
+# Merge indices and biodiversity data -------------------------------------
 
-#merge richness and acoustic indices
-acousticIndices_richness <- merge(acousticIndices_summary, richness[richness$day == 'all',], by = c("type", "Site", "Sensor", "sampling.period"))
+#function to combine indices (all, day, night, morning, evening) and biodiversity (all, not.birds, birds, frogs) based on user specified combinations
+combineIndicesBiodiversity <- function(indices,
+                                       richness,
+                                       combinations) {
+  frames <- list()
+  for (combination in 1:length(combinations)) {
+    frames[[combination]] <- merge(indices %>% 
+                                     filter(type == combinations[[combination]][1]) %>% 
+                                     mutate(type = case_when(type == combinations[[combination]][1] ~ names(combinations[combination]))),
+                                   richness %>% 
+                                     filter(day == 'all') %>% 
+                                     filter(type == combinations[[combination]][2]) %>% 
+                                     mutate(type = case_when(type == combinations[[combination]][2] ~ names(combinations[combination]))),
+                                   by = c("type", "Site", "Sensor", "sampling.period"))
+  }
+  frames <- do.call(rbind, frames)
+  
+  return(frames)
+}
 
+#combine indices and biodiversity using above function
+acousticIndices_richness <- combineIndicesBiodiversity(indices = acousticIndices_summary,
+                                                       richness = richness,
+                                                       combinations = list(all_all = c('all', 'all'),
+                                                                           not.birds_all = c('all', 'not.birds'),
+                                                                           birds_morning = c('morning', 'birds'),
+                                                                           birds_day = c('day', 'birds'),
+                                                                           birds_all = c('all', 'birds'),
+                                                                           frogs_evening = c('evening', 'frogs'),
+                                                                           frogs_night = c('night', 'frogs')))
 
 # Fit random forest models ------------------------------------------------
 
@@ -44,7 +68,7 @@ control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, verbose
 tunegrid <- expand.grid(.mtry=c(2:10))
 
 RandomForestFits <- list()
-RandomForestPerformance <- data.frame(taxa = character(),
+RandomForestPerformance <- data.frame(comparison = character(),
                                       measure = character(),
                                       ACItype = character(),
                                       mtry = numeric(),
@@ -59,8 +83,8 @@ RandomForestPerformance <- data.frame(taxa = character(),
                                       maxResponse = numeric())
 RandomForestImportance <- list()
 
-for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
-  tmpdata <- acousticIndices_richness[acousticIndices_richness$type == taxa,]
+for (comparison in unique(acousticIndices_richness$type)) {
+  tmpdata <- acousticIndices_richness[acousticIndices_richness$type == comparison,]
   
   for (measure in c("richness", "shannon", "count")) {
     
@@ -71,7 +95,7 @@ for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
     #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
     for (formula in 1:length(formulas)) {
       
-      RandomForestFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]] <- train(formulas[[formula]],
+      RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- train(formulas[[formula]],
                                                                                                data = tmpdata,
                                                                                                method = "rf",
                                                                                                trControl = control,
@@ -80,15 +104,15 @@ for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
                                                                                                tuneGrid = tunegrid,
                                                                                                ntree = 1000)
       
-      RandomForestPerformance <- rbind(RandomForestPerformance, data.frame(cbind(taxa = taxa, 
+      RandomForestPerformance <- rbind(RandomForestPerformance, data.frame(cbind(comparison = comparison, 
                                                                                  measure = measure, 
                                                                                  ACItype = names(formulas)[[formula]],
-                                                                                 RandomForestFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]]$results[RandomForestFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]]$results$mtry == RandomForestFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]]$bestTune[[1]],],
+                                                                                 RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$results[RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$results$mtry == RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$bestTune[[1]],],
                                                                                  minResponse = min(tmpdata[measure]),
                                                                                  meanResponse = mean(tmpdata[[measure]]),
                                                                                  maxResponse = max(tmpdata[measure]))))
       
-      RandomForestImportance[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]] <- varImp(RandomForestFits[[paste0(taxa, "_", measure, "_", names(formulas)[[formula]])]])
+      RandomForestImportance[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- varImp(RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]])
     }
   }
 }
@@ -106,32 +130,32 @@ ggplot(data = RandomForestPerformance, aes(x = measure, y = normRMSE, group = AC
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised RMSE") +
-  facet_wrap(~taxa) +
+  facet_wrap(~comparison) +
   theme_bw()
 
 
-Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = taxa, y = normRMSE, group = measure, fill = measure)) +
+Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = normRMSE, group = measure, fill = measure)) +
   geom_col(position = "dodge") +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised RMSE") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = taxa, y = normMAE, group = measure, fill = measure)) +
+Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = normMAE, group = measure, fill = measure)) +
   geom_col(position = "dodge") +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised MAE") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_R2 <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = taxa, y = Rsquared, group = measure, fill = measure)) +
+Plot_R2 <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = Rsquared, group = measure, fill = measure)) +
   geom_col(position = "dodge") +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "R Squared") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = taxa, y = SI, group = measure, fill = measure)) +
+Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], aes(x = comparison, y = SI, group = measure, fill = measure)) +
   geom_col(position = "dodge") +
   scale_fill_viridis_d() +
   scale_y_continuous(limits = c(0, 100)) +
@@ -204,7 +228,7 @@ library(party)
 library(permimp)
 
 RandomForestFits_cforest <- list()
-RandomForestPerformance_cforest <- data.frame(taxa = character(),
+RandomForestPerformance_cforest <- data.frame(comparison = character(),
                                               measure = character(),
                                               ACItype = character(),
                                               mtry = numeric(),
@@ -220,8 +244,8 @@ RandomForestPerformance_cforest <- data.frame(taxa = character(),
 RandomForestImportance_cforest <- list()
 RandomForestImportance_cforest_conditional <- list()
 
-for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
-  tmpdata <- acousticIndices_richness[acousticIndices_richness$type == taxa,]
+for (comparison in unique(acousticIndices_richness$type)) {
+  tmpdata <- acousticIndices_richness[acousticIndices_richness$type == comparison,]
   
   for (measure in c("richness", "shannon", "count")) {
     
@@ -232,23 +256,23 @@ for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
     #formula <- as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + ")))
     for (formula in 1:length(formulas)) {
       
-      RandomForestFits_cforest[[paste0(taxa, "_", measure)]] <- train(formulas[[formula]],
+      RandomForestFits_cforest[[paste0(comparison, "_", measure)]] <- train(formulas[[formula]],
                                                                       data = tmpdata,
                                                                       method = "cforest",
                                                                       trControl = control,
                                                                       tuneGrid = tunegrid,
                                                                       controls = cforest_unbiased(ntree = 1000))
       
-      RandomForestPerformance_cforest <- rbind(RandomForestPerformance_cforest, data.frame(cbind(taxa = taxa, 
+      RandomForestPerformance_cforest <- rbind(RandomForestPerformance_cforest, data.frame(cbind(comparison = comparison, 
                                                                                                  measure = measure, 
                                                                                                  ACItype = names(formulas)[[formula]],
-                                                                                                 RandomForestFits_cforest[[paste0(taxa, "_", measure)]]$results[RandomForestFits_cforest[[paste0(taxa, "_", measure)]]$results$mtry == RandomForestFits_cforest[[paste0(taxa, "_", measure)]]$bestTune[[1]],],
+                                                                                                 RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$results[RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$results$mtry == RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$bestTune[[1]],],
                                                                                                  minResponse = min(tmpdata[measure]),
                                                                                                  meanResponse = mean(tmpdata[[measure]]),
                                                                                                  maxResponse = max(tmpdata[measure]))))
       
-      RandomForestImportance_cforest[[paste0(taxa, "_", measure)]] <- varImp(RandomForestFits_cforest[[paste0(taxa, "_", measure)]])
-      RandomForestImportance_cforest_conditional[[paste0(taxa, "_", measure)]] <- permimp(RandomForestFits_cforest[[paste0(taxa, "_", measure)]]$finalModel, conditional = TRUE)
+      RandomForestImportance_cforest[[paste0(comparison, "_", measure)]] <- varImp(RandomForestFits_cforest[[paste0(comparison, "_", measure)]])
+      RandomForestImportance_cforest_conditional[[paste0(comparison, "_", measure)]] <- permimp(RandomForestFits_cforest[[paste0(comparison, "_", measure)]]$finalModel, conditional = TRUE)
     }
   }
 }

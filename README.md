@@ -12,10 +12,12 @@ EVN?
   - 
 # Table of Contents
 
-|[Bootstrap correlations](#bootstrap-correlations) | [Different ACI
-frequency bands (birds)](#different-aci-frequency-bands-birds) | [Frogs
-(evening, night)](#Frogs-evening-night) |[Random forest
-models](#random-forest-models) | [Bird diversity (morning, day,
+[Bootstrap correlations](#bootstrap-correlations)  
+  [Different ACI frequency bands
+(birds)](#different-aci-frequency-bands-birds)  
+  [Frogs (evening, night)](#Frogs-evening-night)  
+[Random forest models](#random-forest-models)  
+  [Bird diversity (morning, day,
 all)](#bird-diversity-vs-acoustic-indices-morning-day-all)
 
 ## Bootstrap correlations

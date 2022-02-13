@@ -12,17 +12,26 @@ EVN?
   - 
 # Table of Contents
 
-[Bootstrap correlations](#bootstrap-correlations) | [Different ACI
-frequency bands](#different-aci-frequency-bands) [Random forest
+|[Bootstrap correlations](#bootstrap-correlations) | [Different ACI
+frequency bands (birds)](#different-aci-frequency-bands-birds) | [Frogs
+(evening, night)](#Frogs-evening-night) |[Random forest
 models](#random-forest-models) | [Bird diversity (morning, day,
 all)](#bird-diversity-vs-acoustic-indices-morning-day-all)
 
 ## Bootstrap correlations
 
-### Different ACI frequency bands
+### Different ACI frequency bands (birds)
+
+Correlation between biodiversity (richness, shannon diversity, total
+count) and the acoustic complexity index calculated at different
+frequency bands. Total ACI, 3kHz and 1kHz frequency binds were used.
+![Alt
+text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_birdsACI.png)
+
+### Frogs (evening, night)
 
 ![Alt
-text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_bytaxa_allindices.png)
+text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_frogs.png)
 
 ## Random forest models
 

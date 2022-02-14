@@ -15,7 +15,8 @@ EVN?
 [Bootstrap correlations](#bootstrap-correlations)  
   [Different ACI frequency bands
 (birds)](#different-aci-frequency-bands-birds)  
-  [Frogs (evening, night)](#Frogs-evening-night)  
+  [Frogs (evening, night)](#frogs-evening-night)  
+  [All taxa](#all-taxa)  
 [Random forest models](#random-forest-models)  
   [Bird diversity (morning, day,
 all)](#bird-diversity-vs-acoustic-indices-morning-day-all)
@@ -34,6 +35,9 @@ text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_birdsACI.png)
 
 ![Alt
 text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_frogs.png)
+\#\#\# All taxa ![Alt
+text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_bytaxa.png)
+![Alt text](outputs/figures/bootstrapcorrelations/correlationTable.png)
 
 ## Random forest models
 

@@ -19,7 +19,9 @@ EVN?
   [All taxa](#all-taxa)  
 [Random forest models](#random-forest-models)  
   [Bird diversity (morning, day,
-all)](#bird-diversity-vs-acoustic-indices-morning-day-all)
+all)](#bird-diversity-vs-acoustic-indices-morning-day-all)  
+  [All vertebrate taxa](#all-vertebrate-taxa)  
+  [Variable importance](#variable-importance)
 
 ## Bootstrap correlations
 
@@ -55,3 +57,8 @@ text](outputs/figures/randomforestperformance/Birds_MorningDayAll.png)
 ### All vertebrate taxa
 
 ![Alt text](outputs/figures/randomforestperformance/AllComparisons.png)
+
+### Variable importance
+
+![Alt
+text](outputs/figures/randomforestvariableimportance/VariableImportance.png)

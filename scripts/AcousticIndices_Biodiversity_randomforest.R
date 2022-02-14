@@ -186,7 +186,8 @@ ggsave(filename = "outputs/figures/randomforestperformance/Birds_MorningDayAll.p
 
 
 #plot performance measures for all comparisons - totalACI
-Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' &
+                                                     RandomForestPerformance$comparison %in% c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening'),], 
                     aes(x = comparison, y = normRMSE, group = measure, fill = measure)) +
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = normRMSE-normRMSE_SE, ymax = normRMSE+normRMSE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
@@ -195,7 +196,8 @@ Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACIty
   labs(x = "Taxa", y = "Normalised RMSE") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' &
+                                                    RandomForestPerformance$comparison %in% c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening'),], 
                    aes(x = comparison, y = normMAE, group = measure, fill = measure)) +
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = normMAE-normMAE_SE, ymax = normMAE+normMAE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
@@ -204,7 +206,8 @@ Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItyp
   labs(x = "Taxa", y = "Normalised MAE") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' &
+                                                   RandomForestPerformance$comparison %in% c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening'),], 
                   aes(x = comparison, y = SI, group = measure, fill = measure)) +
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = SI-SI_SE, ymax = SI+SI_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
@@ -213,7 +216,8 @@ Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype
   labs(x = "Taxa", y = "Scatter Index") +
   theme_bw() +
   theme(legend.position = "none")
-Plot_R2 <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI',], 
+Plot_R2 <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' &
+                                                   RandomForestPerformance$comparison %in% c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening'),], 
                   aes(x = comparison, y = Rsquared, group = measure, fill = measure)) +
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = Rsquared-Rsquared_SE, ymax = Rsquared+Rsquared_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
@@ -229,9 +233,12 @@ legend_bottom <- get_legend(
     theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
 )
 
-plot_grid(Plot_MAE, Plot_SI, Plot_R2, legend_bottom,
-          ncol = 1,
-          rel_heights = c(1, 1, 1, 0.1))
+Plot_AllRF <- plot_grid(Plot_RMSE, Plot_SI, Plot_R2, legend_bottom,
+                        ncol = 2)
+                        #rel_heights = c(1, 1, 1, 0.1))
+ggsave(filename = "outputs/figures/randomforestperformance/AllComparisons.png",
+       plot = Plot_AllRF,
+       width = 24, height = 20, units = "cm", dpi = 800)
 
 # Variable importance -----------------------------------------------------
 

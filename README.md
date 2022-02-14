@@ -35,7 +35,10 @@ text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_birdsACI.png)
 
 ![Alt
 text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_frogs.png)
-\#\#\# All taxa ![Alt
+
+### All taxa
+
+![Alt
 text](outputs/figures/bootstrapcorrelations/bootstrap_correlations_bytaxa.png)
 ![Alt text](outputs/figures/bootstrapcorrelations/correlationTable.png)
 
@@ -48,3 +51,7 @@ forest models on bird biodiversity when using acoustic indices
 calculated for all recordings, morning recordings (6am-9am), or day
 recordings (6am-6pm). ![Alt
 text](outputs/figures/randomforestperformance/Birds_MorningDayAll.png)
+
+### All vertebrate taxa
+
+![Alt text](outputs/figures/randomforestperformance/AllComparisons.png)

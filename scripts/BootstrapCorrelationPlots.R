@@ -191,55 +191,23 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_frogs.png",
 
 
 
-#correlation plot for all comparisons using standard indices (i.e. not frequency specific ACI bands)
+#correlation plot facetted by taxa (using birds_morning and frogs_evening)
 indicesToUse <- c("ACI", 
                   "ADI", 
                   "AEI", 
                   "BI", 
                   "NDSI", 
-                  "EVN")
+                  "EVN",
+                  "SH",
+                  "LFC",
+                  "MFC",
+                  "HFC")
 
-#plot facetted by biodiversity measure
 correlationPlots <- list()
-for (measure in c('richness', 'shannon', 'count')) {
-  tmp_data <- bootCor_results[bootCor_results$Measure == measure & bootCor_results$Index %in% indicesToUse,]
-  
-  correlationPlots[[measure]] <- ggplot(data = tmp_data, aes(x = Mean, y = Index, group = Taxa, colour = Taxa)) +
-    geom_vline(xintercept = 0, linetype = 'dashed') +
-    geom_pointrange(aes(xmin = Low, xmax = High), position = position_dodge(width = 0.4)) +
-    scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, 0.4)) +
-    #scale_color_viridis_d(labels = c('All vertebrates', 'Birds', 'Frogs', 'Not birds')) +
-    labs(x = "Mean correlation") +
-    theme_classic() +
-    theme(axis.title = element_blank(),
-          legend.position = "none")
-}
-
-legend_bottom <- get_legend(
-  correlationPlots[['count']] + 
-    guides(color = guide_legend(nrow = 1)) +
-    theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
-)
-
-correlationPlot <- plot_grid(plotlist = correlationPlots,
-                             ncol = 1,
-                             labels = c(paste0("a) ", names(correlationPlots)[1]),
-                                        paste0("b) ", names(correlationPlots)[2]),
-                                        paste0("c) ", names(correlationPlots)[3])),
-                             hjust = 0, label_x = 0.12) %>% 
-  annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
-  plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
-
-ggsave("outputs/figures/bootstrap_correlations.png",
-       correlationPlot,
-       width = 12, height = 24, units = "cm", dpi = 800)
-
-
-#plot facetted by taxa
-correlationPlots <- list()
-for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
+for (taxa in c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening')) {
   tmp_data <- bootCor_results[bootCor_results$Taxa == taxa & bootCor_results$Index %in% indicesToUse,]
   tmp_data$Measure <- factor(tmp_data$Measure, levels = c("richness", "shannon", "count"))
+  tmp_data$Index <- fct_relevel(tmp_data$Index, indicesToUse)
   
   correlationPlots[[taxa]] <- ggplot(data = tmp_data, aes(x = Mean, y = Index, group = Measure, colour = Measure)) +
     geom_vline(xintercept = 0, linetype = 'dashed') +
@@ -253,24 +221,25 @@ for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
 }
 
 legend_bottom <- get_legend(
-  correlationPlots[['birds']] + 
+  correlationPlots[['all_all']] + 
     guides(color = guide_legend(nrow = 1)) +
     theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
 )
 
 correlationPlot <- plot_grid(plotlist = correlationPlots,
                              ncol = 2,
-                             labels = c(paste0("a) ", names(correlationPlots)[1]),
-                                        paste0("b) ", names(correlationPlots)[2]),
-                                        paste0("c) ", names(correlationPlots)[3]),
-                                        paste0("d) ", names(correlationPlots)[4])),
+                             labels = c("a) all vertebrates",
+                                        "b) non avian vertebrates",
+                                        "c) birds",
+                                        "d) frogs"),
                              hjust = 0, label_x = 0.12) %>% 
   annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
   plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
-ggsave("outputs/figures/bootstrap_correlations_bytaxa.png",
+ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_bytaxa.png",
        correlationPlot,
        width = 24, height = 24, units = "cm", dpi = 800)
+
 
 
 #plot facetted by taxa - all indices
@@ -315,7 +284,11 @@ ggsave("outputs/figures/bootstrap_correlations_bytaxa_allindices.png",
 
 library(kableExtra)
 
-bootCor_results_table <- bootCor_results
+bootCor_results_table <- bootCor_results %>% 
+  filter(Index %in% indicesToUse) %>% 
+  filter(Taxa %in% c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening'))
+bootCor_results_table$Index <- fct_relevel(bootCor_results_table$Index, indicesToUse)
+
 
 bootCor_results_table$value <- paste0(round(bootCor_results_table$Mean, 2), 
                                       " (", 
@@ -333,4 +306,6 @@ bootCor_results_table <- bootCor_results_table %>% arrange(factor(Measure, level
 
 bootCor_results_table %>%
   kbl() %>%
-  kable_classic_2(full_width = F)
+  kable_classic_2(full_width = F) %>% 
+  row_spec(0, bold = T)
+  row_spec(5:8, italic = T)

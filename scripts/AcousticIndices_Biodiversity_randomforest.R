@@ -260,31 +260,35 @@ for (randomforest in 1:length(RandomForestImportance)) {
 }
 
 #arrange plot using egg package - even sized plots
-egg::ggarrange(as_ggplot(text_grob(label = "richness")),
-               as_ggplot(text_grob(label = "shannon")),
-               as_ggplot(text_grob(label = "count")),
-               ggplot() + theme_void(),
-               Plots_VariableImportance[[1]] + rremove("x.text"),
-               Plots_VariableImportance[[3]] + rremove("axis.text"),
-               Plots_VariableImportance[[5]] + rremove("axis.text"),
-               as_ggplot(text_grob(label = "all", rot = 270)),
-               Plots_VariableImportance[[7]] + rremove("x.text"),
-               Plots_VariableImportance[[9]] + rremove("axis.text"),
-               Plots_VariableImportance[[11]] + rremove("axis.text"),
-               as_ggplot(text_grob(label = "not.birds", rot = 270)),
-               Plots_VariableImportance[[13]] + rremove("x.text"),
-               Plots_VariableImportance[[15]] + rremove("axis.text"),
-               Plots_VariableImportance[[17]] + rremove("axis.text"),
-               as_ggplot(text_grob(label = "birds", rot = 270)),
-               Plots_VariableImportance[[19]],
-               Plots_VariableImportance[[21]] + rremove("y.text"),
-               Plots_VariableImportance[[23]] + rremove("y.text"),
-               as_ggplot(text_grob(label = "frogs", rot = 270)),
-               ncol = 4,
-               heights = c(0.1,1,1,1,1),
-               widths = c(1,1,1,0.1)) %>% 
+Plot_VariableImportance <- egg::ggarrange(as_ggplot(text_grob(label = "richness")),
+                                          as_ggplot(text_grob(label = "shannon")),
+                                          as_ggplot(text_grob(label = "count")),
+                                          ggplot() + theme_void(),
+                                          Plots_VariableImportance[['all_all_richness_totalACI']] + rremove("x.text"),
+                                          Plots_VariableImportance[['all_all_shannon_totalACI']] + rremove("axis.text"),
+                                          Plots_VariableImportance[['all_all_count_totalACI']] + rremove("axis.text"),
+                                          as_ggplot(text_grob(label = "all", rot = 270)),
+                                          Plots_VariableImportance[['not.birds_all_richness_totalACI']] + rremove("x.text"),
+                                          Plots_VariableImportance[['not.birds_all_shannon_totalACI']] + rremove("axis.text"),
+                                          Plots_VariableImportance[['not.birds_all_count_totalACI']] + rremove("axis.text"),
+                                          as_ggplot(text_grob(label = "not.birds", rot = 270)),
+                                          Plots_VariableImportance[['birds_morning_richness_totalACI']] + rremove("x.text"),
+                                          Plots_VariableImportance[['birds_morning_shannon_totalACI']] + rremove("axis.text"),
+                                          Plots_VariableImportance[['birds_morning_count_totalACI']] + rremove("axis.text"),
+                                          as_ggplot(text_grob(label = "birds", rot = 270)),
+                                          Plots_VariableImportance[['frogs_evening_richness_totalACI']],
+                                          Plots_VariableImportance[['frogs_evening_shannon_totalACI']] + rremove("y.text"),
+                                          Plots_VariableImportance[['frogs_evening_count_totalACI']] + rremove("y.text"),
+                                          as_ggplot(text_grob(label = "frogs", rot = 270)),
+                                          ncol = 4,
+                                          heights = c(0.1,1,1,1,1),
+                                          widths = c(1,1,1,0.1)) %>% 
   annotate_figure(bottom = "Overall",
                   left = "Acoustic Index")
+
+ggsave(filename = "outputs/figures/randomforestvariableimportance/VariableImportance.png",
+       plot = Plot_VariableImportance,
+       width = 20, height = 20, units = "cm", dpi = 800)
 
 #save everything in environment for later loading
 save.image(file = "outputs/workspaces/RandomForest.RData")

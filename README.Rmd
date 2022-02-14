@@ -21,6 +21,8 @@ Six different acoustic indices were used: ACI, ADI, AEI, BI, NDSI and EVN?
 |   [All taxa](#all-taxa)
 | [Random forest models](#random-forest-models)
 |   [Bird diversity (morning, day, all)](#bird-diversity-vs-acoustic-indices-morning-day-all)
+|   [All vertebrate taxa](#all-vertebrate-taxa)
+|   [Variable importance](#variable-importance)
 
 ## Bootstrap correlations
 
@@ -43,3 +45,6 @@ There was little difference in the predictive performance of random forest model
 
 ### All vertebrate taxa
 ![Alt text](outputs/figures/randomforestperformance/AllComparisons.png)
+
+### Variable importance
+![Alt text](outputs/figures/randomforestvariableimportance/VariableImportance.png)

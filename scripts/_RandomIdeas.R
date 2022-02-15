@@ -172,16 +172,73 @@ RandomForestQuantRegPerformance <- RandomForestQuantRegPerformance %>% mutate(no
 
 
 
-#observed vs predicted plot
-test <- data.frame(predictions = predict(RandomForestQuantRegFits$birds_count_totalACI$finalModel),
-                   observations = acousticIndices_richness$count[acousticIndices_richness$type == 'birds'])
+#observed vs predicted plot - birds_morning_richness
+obs_pred_birds_morning_richness <- data.frame(predictions = predict(RandomForestFits$birds_morning_richness_totalACI),
+                                              observations = acousticIndices_richness$richness[acousticIndices_richness$type == 'birds_morning'])
 
-ggplot(test, aes(x = observations, y = predictions)) +
+Plot_obs_pred_Birds_Richness <- ggplot(obs_pred_birds_morning_richness, aes(x = observations, y = predictions)) +
   geom_point() +
-  scale_x_continuous(limits = c(min(test), max(test))) +
-  scale_y_continuous(limits = c(min(test), max(test))) +
-  geom_abline(slope = 1) +
-  theme_bw()
+  scale_x_continuous(limits = c(min(obs_pred_birds_morning_richness), max(obs_pred_birds_morning_richness))) +
+  scale_y_continuous(limits = c(min(obs_pred_birds_morning_richness), max(obs_pred_birds_morning_richness))) +
+  geom_abline(slope = 1, linetype = 'dashed') +
+  theme_classic()
+
+#observed vs predicted plot - birds_morning_count
+obs_pred_birds_morning_count <- data.frame(predictions = predict(RandomForestFits$birds_morning_count_totalACI),
+                                           observations = acousticIndices_richness$count[acousticIndices_richness$type == 'birds_morning'])
+
+Plot_obs_pred_Birds_Count <- ggplot(obs_pred_birds_morning_count, aes(x = observations, y = predictions)) +
+  geom_point() +
+  scale_x_continuous(limits = c(min(obs_pred_birds_morning_count), max(obs_pred_birds_morning_count))) +
+  scale_y_continuous(limits = c(min(obs_pred_birds_morning_count), max(obs_pred_birds_morning_count))) +
+  geom_abline(slope = 1, linetype = 'dashed') +
+  theme_classic()
+
+Plot_obs_pred_Birds <- plot_grid(Plot_obs_pred_Birds_Richness,
+                                 Plot_obs_pred_Birds_Count,
+                                 ncol = 1,
+                                 labels = c("a) richness",
+                                            "b) count"),
+                                 hjust = 0, label_x = 0.15)
+
+ggsave(filename = "outputs/figures/randomforestobspred/birds.png",
+       plot = Plot_obs_pred_Birds,
+       width = 10, height = 20, units = "cm", dpi = 800)
+
+
+#observed vs predicted plot - all_all_richness
+obs_pred_all_all_richness <- data.frame(predictions = predict(RandomForestFits$all_all_richness_totalACI),
+                                        observations = acousticIndices_richness$richness[acousticIndices_richness$type == 'all_all'])
+
+Plot_obs_pred_All_Richness <- ggplot(obs_pred_all_all_richness, aes(x = observations, y = predictions)) +
+  geom_point() +
+  scale_x_continuous(limits = c(min(obs_pred_all_all_richness), max(obs_pred_all_all_richness))) +
+  scale_y_continuous(limits = c(min(obs_pred_all_all_richness), max(obs_pred_all_all_richness))) +
+  geom_abline(slope = 1, linetype = 'dashed') +
+  theme_classic()
+
+#observed vs predicted plot - all_all_count
+obs_pred_all_all_count <- data.frame(predictions = predict(RandomForestFits$all_all_count_totalACI),
+                                     observations = acousticIndices_richness$count[acousticIndices_richness$type == 'all_all'])
+
+Plot_obs_pred_All_Count <- ggplot(obs_pred_all_all_count, aes(x = observations, y = predictions)) +
+  geom_point() +
+  scale_x_continuous(limits = c(min(obs_pred_all_all_count), max(obs_pred_all_all_count))) +
+  scale_y_continuous(limits = c(min(obs_pred_all_all_count), max(obs_pred_all_all_count))) +
+  geom_abline(slope = 1, linetype = 'dashed') +
+  theme_classic()
+
+Plot_obs_pred_All <- plot_grid(Plot_obs_pred_All_Richness,
+                               Plot_obs_pred_All_Count,
+                               ncol = 1,
+                               labels = c("a) richness",
+                                          "b) count"),
+                               hjust = 0, label_x = 0.15)
+
+ggsave(filename = "outputs/figures/randomforestobspred/all.png",
+       plot = Plot_obs_pred_All,
+       width = 10, height = 20, units = "cm", dpi = 800)
+
 
 
 

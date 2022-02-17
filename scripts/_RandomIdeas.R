@@ -1,3 +1,54 @@
+#Look at correlation between mean and median indices summarised for different time periods
+library(ggcorrplot)
+library(cowplot)
+library(ggpubr)
+
+Plot_MeanMedian_Cor <- list()
+IndiceCorrelations <- list()
+for (type in unique(acousticIndices_summary$type)) {
+  tmp <- acousticIndices_summary[acousticIndices_summary$type == type,]
+  
+  res <- cor(tmp[c(5:17, 28:40)])
+  IndiceCorrelations[[paste0(type)]] <- res[1:13,14:26] #only keep comparisons between mean and median - i.e. no self comparisons
+  Plot_MeanMedian_Cor[[paste0(type)]] <- ggcorrplot(IndiceCorrelations[[paste0(type)]], 
+                                                    method = "circle", 
+                                                    colors = c("#6D9EC1", "white", "#E46726"),
+                                                    outline.color = "black") + 
+    scale_size(range = c(1, 6)) +
+    theme(legend.position = "none")
+}
+
+legend_bottom <- get_legend(
+  Plot_MeanMedian_Cor[[paste0(type)]] + 
+    guides(color = guide_legend(nrow = 1)) +
+    theme(legend.position = "bottom", legend.direction = "horizontal")
+)
+
+Plot_MeanMedian_Cor_Arranged <- egg::ggarrange(as_ggplot(text_grob(label = "all")),
+                                               as_ggplot(text_grob(label = "day")),
+                                               as_ggplot(text_grob(label = "night")),
+                                               Plot_MeanMedian_Cor$all + rremove("x.text"),
+                                               Plot_MeanMedian_Cor$day + rremove("xy.text"),
+                                               Plot_MeanMedian_Cor$night + rremove("xy.text"),
+                                               as_ggplot(text_grob(label = "morning")),
+                                               as_ggplot(text_grob(label = "afternoon")),
+                                               as_ggplot(text_grob(label = "evening")),
+                                               Plot_MeanMedian_Cor$morning,
+                                               Plot_MeanMedian_Cor$afternoon + rremove("y.text"),
+                                               Plot_MeanMedian_Cor$evening + rremove("y.text"),
+                                               ncol = 3,
+                                               heights = c(0.07,1,0.07,1))
+
+Plot_MeanMedian_Cor_Arranged <- plot_grid(Plot_MeanMedian_Cor_Arranged, legend_bottom,
+                                          ncol = 1, rel_heights = c(1, 0.1))
+
+ggsave(filename = "outputs/figures/IndicesCorrelation_MeanVsMedian.png",
+       plot = Plot_MeanMedian_Cor_Arranged,
+       width = 30, height = 20, units = "cm", dpi = 800)
+
+
+
+
 #plot biodiversity by site - how can I visualise this with index values?
 ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds',], 
        aes(x = fct_relevel(Site, "Tarcutta", "Duval", "Mourachan", "Wambiana", "Undara", "Rinyirru"), 

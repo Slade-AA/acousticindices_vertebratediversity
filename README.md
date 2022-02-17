@@ -21,7 +21,8 @@ EVN?
   [Bird diversity (morning, day,
 all)](#bird-diversity-vs-acoustic-indices-morning-day-all)  
   [All vertebrate taxa](#all-vertebrate-taxa)  
-  [Variable importance](#variable-importance)
+  [Variable importance](#variable-importance)  
+  [Observed vs Predicted](#observed-vs-predicted)
 
 ## Bootstrap correlations
 
@@ -62,3 +63,13 @@ text](outputs/figures/randomforestperformance/Birds_MorningDayAll.png)
 
 ![Alt
 text](outputs/figures/randomforestvariableimportance/VariableImportance.png)
+
+### Observed vs Predicted
+
+Observed vs predicted plot for random forest models trained to predict
+richness and count of all vertebrate taxa from 13 acoustic indices.
+![Alt text](outputs/figures/randomforestobspred/all.png)
+
+Observed vs predicted plot for random forest models trained to predict
+richness and count of birds from 13 acoustic indices. ![Alt
+text](outputs/figures/randomforestobspred/birds.png)

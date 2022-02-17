@@ -31,6 +31,14 @@ acousticIndices_morning <- acousticIndices_surveys %>%
                     starts_with("ACI")), 
                list(mean = mean, median = median))
 
+#Summarise afternoon 3pm-6pm
+acousticIndices_afternoon <- acousticIndices_surveys %>% 
+  filter(hms(TIME_NEW) >= hms("15:00:00") & hms(TIME_NEW) < hms("18:00:00")) %>% 
+  group_by(Site, Sensor, sampling.period) %>% 
+  summarise_at(vars("SH", "NDSI", "ACI", "ADI", "AEI", "BI", "BGN", "SNR", "ACT", "EVN", "LFC", "MFC", "HFC",
+                    starts_with("ACI")), 
+               list(mean = mean, median = median))
+
 #Summarise evening 6pm-9pm
 acousticIndices_evening <- acousticIndices_surveys %>% 
   filter(hms(TIME_NEW) >= hms("18:00:00") & hms(TIME_NEW) < hms("21:00:00")) %>% 
@@ -57,7 +65,8 @@ acousticIndices_night <- acousticIndices_surveys %>%
 
 #bind in single data frame
 acousticIndices_summary <- bind_rows(list(all = acousticIndices_7days, 
-                                          morning = acousticIndices_morning, 
+                                          morning = acousticIndices_morning,
+                                          afternoon = acousticIndices_afternoon,
                                           evening = acousticIndices_evening,
                                           day = acousticIndices_day,
                                           night = acousticIndices_night),

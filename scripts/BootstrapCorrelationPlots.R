@@ -56,6 +56,7 @@ acousticIndices_richness <- combineIndicesBiodiversity(indices = acousticIndices
                                                        combinations = list(all_all = c('all', 'all'),
                                                                            not.birds_all = c('all', 'not.birds'),
                                                                            birds_morning = c('morning', 'birds'),
+                                                                           birds_afternoon = c('afternoon', 'birds'),
                                                                            birds_day = c('day', 'birds'),
                                                                            birds_all = c('all', 'birds'),
                                                                            frogs_evening = c('evening', 'frogs'),

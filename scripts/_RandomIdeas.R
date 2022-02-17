@@ -3,6 +3,13 @@ library(ggcorrplot)
 library(cowplot)
 library(ggpubr)
 
+#summary indices
+files <- file.info(list.files("./outputs/data/", pattern = ".*_acousticIndices_summary.RData$", full.names = TRUE)) #list files
+latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
+
+load(latestFile)
+
+#Plot correlations between mean and median of each index
 Plot_MeanMedian_Cor <- list()
 IndiceCorrelations <- list()
 for (type in unique(acousticIndices_summary$type)) {

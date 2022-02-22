@@ -27,7 +27,7 @@ richness <- richness %>% mutate(type = recode(type,
 
 # Merge indices and biodiversity data -------------------------------------
 
-#function to combine indices (all, day, night, morning, evening) and biodiversity (all, not.birds, birds, frogs) based on user specified combinations
+#function to combine indices (all, day, night, morning, afternoon, evening) and biodiversity (all, not.birds, birds, frogs) based on user specified combinations
 combineIndicesBiodiversity <- function(indices,
                                        richness,
                                        combinations) {
@@ -79,10 +79,9 @@ RandomForestPerformance <- data.frame(comparison = character(),
                                       meanResponse = numeric(),
                                       maxResponse = numeric())
 RandomForestImportance <- list()
-
 RandomForestPredictions <- list()
 
-indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC') #specify which indices to use in rf models
 
 pb = txtProgressBar(min = 0, max = length(unique(acousticIndices_richness$type)) * 3 * 3, initial = 0, style = 3); k <- 0
 
@@ -318,7 +317,7 @@ ggsave(filename = "outputs/figures/randomforestobspred/ObservedPredicted.png",
 
 # Variable importance -----------------------------------------------------
 
-#rename acoustic index names to remove '_mean'
+#rename acoustic index names to remove '_mean' & reorder acoustic indices to order specified in 'indicesToUse'
 for (df in 1:length(RandomForestImportance)) {
   RandomForestImportance[[df]]$importance$AcousticIndex <- gsub("_mean", "", rownames(RandomForestImportance[[df]]$importance))
   RandomForestImportance[[df]]$importance$AcousticIndex <- factor(RandomForestImportance[[df]]$importance$AcousticIndex,

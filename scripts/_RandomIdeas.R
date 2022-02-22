@@ -165,7 +165,7 @@ fviz_pca_var(pca.all,
 ##### SHOULD THESE PREDICTIONS BE USING '$finalModel' ??????
 
 #observed vs predicted plot - birds_morning_richness
-obs_pred_birds_morning_richness <- data.frame(predictions = predict(RandomForestFits$birds_morning_richness_totalACI),
+obs_pred_birds_morning_richness <- data.frame(predictions = predict(RandomForestFits$birds_morning_richness_totalACI$finalModel),
                                               observations = acousticIndices_richness$richness[acousticIndices_richness$type == 'birds_morning'])
 
 Plot_obs_pred_Birds_Richness <- ggplot(obs_pred_birds_morning_richness, aes(x = observations, y = predictions)) +
@@ -176,7 +176,7 @@ Plot_obs_pred_Birds_Richness <- ggplot(obs_pred_birds_morning_richness, aes(x = 
   theme_classic()
 
 #observed vs predicted plot - birds_morning_count
-obs_pred_birds_morning_count <- data.frame(predictions = predict(RandomForestFits$birds_morning_count_totalACI),
+obs_pred_birds_morning_count <- data.frame(predictions = predict(RandomForestFits$birds_morning_count_totalACI$finalModel),
                                            observations = acousticIndices_richness$count[acousticIndices_richness$type == 'birds_morning'])
 
 Plot_obs_pred_Birds_Count <- ggplot(obs_pred_birds_morning_count, aes(x = observations, y = predictions)) +
@@ -199,7 +199,7 @@ ggsave(filename = "outputs/figures/randomforestobspred/birds.png",
 
 
 #observed vs predicted plot - all_all_richness
-obs_pred_all_all_richness <- data.frame(predictions = predict(RandomForestFits$all_all_richness_totalACI),
+obs_pred_all_all_richness <- data.frame(predictions = predict(RandomForestFits$all_all_richness_totalACI$finalModel),
                                         observations = acousticIndices_richness$richness[acousticIndices_richness$type == 'all_all'])
 
 Plot_obs_pred_All_Richness <- ggplot(obs_pred_all_all_richness, aes(x = observations, y = predictions)) +
@@ -210,7 +210,7 @@ Plot_obs_pred_All_Richness <- ggplot(obs_pred_all_all_richness, aes(x = observat
   theme_classic()
 
 #observed vs predicted plot - all_all_count
-obs_pred_all_all_count <- data.frame(predictions = predict(RandomForestFits$all_all_count_totalACI),
+obs_pred_all_all_count <- data.frame(predictions = predict(RandomForestFits$all_all_count_totalACI$finalModel),
                                      observations = acousticIndices_richness$count[acousticIndices_richness$type == 'all_all'])
 
 Plot_obs_pred_All_Count <- ggplot(obs_pred_all_all_count, aes(x = observations, y = predictions)) +
@@ -233,6 +233,46 @@ ggsave(filename = "outputs/figures/randomforestobspred/all.png",
 
 
 
+
+#caret function to extract obs vs pred
+test <- extractPrediction(list(RandomForestFits$all_all_richness_totalACI))
+
+#caret function to extract obs vs pred per repeat
+test2 <- RandomForestFits$all_all_richness_totalACI$pred[RandomForestFits$all_all_richness_totalACI$pred$mtry == 2, c("pred", "obs")]
+ggplot(data = test2, aes(x = obs, y = pred)) + 
+  geom_point() + 
+  geom_abline(slope = 1, linetype = 'dashed') + 
+  scale_x_continuous(limits = c(min(test2), max(test2))) + 
+  scale_y_continuous(limits = c(min(test2), max(test2))) + 
+  theme_classic()
+
+
+#10 x 10 cross-validation
+control <- trainControl(method = "repeatedcv", number = 10, repeats = 10, verbose = FALSE, savePredictions = TRUE)
+tunegrid <- expand.grid(.mtry=c(2:10))
+
+test_rf_birds_richness <- train(richness ~ SH_mean + NDSI_mean + ACI_mean + ADI_mean + AEI_mean + 
+                                  BI_mean + BGN_mean + SNR_mean + ACT_mean + EVN_mean + LFC_mean + 
+                                  MFC_mean + HFC_mean,
+                                data = acousticIndices_richness[acousticIndices_richness$type == 'birds_morning',],
+                                method = "rf",
+                                trControl = control,
+                                importance = TRUE,
+                                allowParallel = TRUE,
+                                tuneGrid = tunegrid,
+                                ntree = 1000)
+
+test_rf_birds_richness_pred_obs <- test_rf_birds_richness$pred[test_rf_birds_richness$pred$mtry == 3, c("pred", "obs")]
+
+#test_rf_birds_richness_pred_obs_meanSE <- test_rf_birds_richness_pred_obs %>% group_by(obs) %>% summarise(mean = mean(),
+#                                                                                                          se = sd/sqrt(10))
+
+ggplot(data = test_rf_birds_richness_pred_obs, aes(x = obs, y = pred)) + 
+  geom_abline(slope = 1, linetype = 'dashed') + 
+  geom_point() + 
+  scale_x_continuous(limits = c(min(test_rf_birds_richness_pred_obs), max(test_rf_birds_richness_pred_obs))) + 
+  scale_y_continuous(limits = c(min(test_rf_birds_richness_pred_obs), max(test_rf_birds_richness_pred_obs))) + 
+  theme_classic()
 
 
 

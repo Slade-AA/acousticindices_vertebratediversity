@@ -56,8 +56,104 @@ ggsave(filename = "outputs/figures/IndicesCorrelation_MeanVsMedian.png",
 
 
 
+#Fit random forest to index summaries of different time horizons
+birds_wider <- acousticIndices_richness %>% 
+  filter(grepl("^birds", type)) %>% 
+  select(-ends_with("_median")) %>% 
+  pivot_wider(names_from = type, values_from = ends_with("mean"))
+
+# Fit random forest models ------------------------------------------------
+
+control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, verbose = FALSE, savePredictions = TRUE)
+tunegrid <- expand.grid(.mtry=c(2:10))
+
+RandomForest_birdswiderFits <- list()
+RandomForest_birdswiderPerformance <- data.frame(comparison = character(),
+                                                 measure = character(),
+                                                 ACItype = character(),
+                                                 mtry = numeric(),
+                                                 RMSE = numeric(),
+                                                 Rsquared = numeric(),
+                                                 MAE = numeric(),
+                                                 RMSESD = numeric(),
+                                                 RsquaredSD = numeric(),
+                                                 MAESD = numeric(),
+                                                 minResponse = numeric(),
+                                                 meanResponse = numeric(),
+                                                 maxResponse = numeric())
+RandomForest_birdswiderImportance <- list()
+
+#pb = txtProgressBar(min = 0, max = length(unique(acousticIndices_richness$type)) * 3 * 3, initial = 0, style = 3); k <- 0
+
+for (comparison in c('birds_wider')) {
+  for (measure in c("richness", "shannon", "count")) {
+    
+    #forumlas for using just total ACI, 3kHz ACI, and 1kHz ACI values
+    formulas <- list(totalACI = as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(birds_wider), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))))
+    
+    for (formula in 1:length(formulas)) {
+      
+      RandomForest_birdswiderFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- train(formulas[[formula]],
+                                                                                                                data = birds_wider,
+                                                                                                                method = "rf",
+                                                                                                                trControl = control,
+                                                                                                                importance = TRUE,
+                                                                                                                allowParallel = TRUE,
+                                                                                                                tuneGrid = tunegrid,
+                                                                                                                ntree = 1000)
+      
+      RandomForest_birdswiderPerformance <- rbind(RandomForest_birdswiderPerformance, data.frame(cbind(comparison = comparison, 
+                                                                                                       measure = measure, 
+                                                                                                       ACItype = names(formulas)[[formula]],
+                                                                                                       RandomForest_birdswiderFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$results[RandomForest_birdswiderFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$results$mtry == RandomForest_birdswiderFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$bestTune[[1]],],
+                                                                                                       minResponse = min(birds_wider[measure]),
+                                                                                                       meanResponse = mean(birds_wider[[measure]]),
+                                                                                                       maxResponse = max(birds_wider[measure]))))
+      
+      RandomForest_birdswiderImportance[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- varImp(RandomForest_birdswiderFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]])
+      
+      #k <- k+1; setTxtProgressBar(pb, k)
+    }
+  }
+}
+
+
+#Normalize RMSE and MAE, calculate Scatter Index
+RandomForest_birdswiderPerformance <- RandomForest_birdswiderPerformance %>% mutate(normRMSE = RMSE/(maxResponse-minResponse),
+                                                                                    normMAE = MAE/(maxResponse-minResponse),
+                                                                                    SI = (RMSE/meanResponse)*100,
+                                                                                    normRMSE_SE = RMSESD/(maxResponse-minResponse)/sqrt(30),
+                                                                                    normMAE_SE = MAESD/(maxResponse-minResponse)/sqrt(30),
+                                                                                    SI_SE = (RMSESD/meanResponse)*100/sqrt(30),
+                                                                                    Rsquared_SE = RsquaredSD/sqrt(30))
+
+
+
+rbind(RandomForest_birdswiderPerformance, RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' & RandomForestPerformance$comparison %in% grep("^birds*", RandomForestPerformance$comparison, value = TRUE),]) %>% 
+  ggplot(aes(x = measure, y = normRMSE, group = comparison, fill = comparison)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = normRMSE-normRMSE_SE, ymax = normRMSE+normRMSE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
+  scale_fill_viridis_d() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Taxa", y = "Normalised RMSE") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+rbind(RandomForest_birdswiderPerformance, RandomForestPerformance[RandomForestPerformance$ACItype == 'totalACI' & RandomForestPerformance$comparison %in% grep("^birds*", RandomForestPerformance$comparison, value = TRUE),]) %>% 
+  ggplot(aes(x = measure, y = normMAE, group = comparison, fill = comparison)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_errorbar(aes(ymin = normMAE-normMAE_SE, ymax = normMAE+normMAE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
+  scale_fill_viridis_d() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Taxa", y = "Normalised MAE") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+
+
+
+
 #plot biodiversity by site - how can I visualise this with index values?
-ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds',], 
+ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds_morning',], 
        aes(x = fct_relevel(Site, "Tarcutta", "Duval", "Mourachan", "Wambiana", "Undara", "Rinyirru"), 
            y = count)) +
   geom_point(position = position_dodge(width = 0.2)) +
@@ -65,21 +161,21 @@ ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds',
   theme_bw()
 
 
-ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds',], 
+ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds_morning',], 
        aes(x = fct_relevel(Site, "Tarcutta", "Duval", "Mourachan", "Wambiana", "Undara", "Rinyirru"), 
            y = richness)) +
   geom_point(position = position_dodge(width = 0.2)) +
   facet_wrap(~sampling.period) +
   theme_bw()
 
-ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds',], 
+ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds_morning',], 
        aes(x = fct_relevel(Site, "Tarcutta", "Duval", "Mourachan", "Wambiana", "Undara", "Rinyirru"), 
            y = richness)) +
   geom_boxplot() +
   facet_wrap(~sampling.period) +
   theme_bw()
 
-ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds',], 
+ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds_morning',], 
        aes(x = fct_relevel(Site, "Tarcutta", "Duval", "Mourachan", "Wambiana", "Undara", "Rinyirru"), 
            y = BI_mean)) +
   geom_boxplot() +
@@ -91,8 +187,8 @@ ggplot(data = acousticIndices_richness[acousticIndices_richness$type == 'birds',
 #ale plots
 predfun <- function(X.model, newdata) predict(X.model, as.matrix(newdata))
 
-ALEPlot::ALEPlot(X = acousticIndices_richness[acousticIndices_richness$type == 'birds',], 
-                 X.model = RandomForestFits$birds_richness$finalModel, 
+ALEPlot::ALEPlot(X = acousticIndices_richness[acousticIndices_richness$type == 'birds_morning',], 
+                 X.model = RandomForestFits$birds_morning_richness_totalACI$finalModel, 
                  J = c(7,10),
                  pred.fun = predfun)
 

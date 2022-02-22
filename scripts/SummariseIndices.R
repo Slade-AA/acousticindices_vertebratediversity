@@ -70,6 +70,6 @@ acousticIndices_summary <- bind_rows(list(all = acousticIndices_7days,
                                           evening = acousticIndices_evening,
                                           day = acousticIndices_day,
                                           night = acousticIndices_night),
-                                     .id = "type")
+                                     .id = "type") %>% ungroup()
 
 save(acousticIndices_summary, file = paste0("./outputs/data/", Sys.Date(), "_acousticIndices_summary.RData"))

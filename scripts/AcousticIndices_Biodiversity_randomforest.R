@@ -34,7 +34,7 @@ combineIndicesBiodiversity <- function(indices,
   frames <- list()
   for (combination in 1:length(combinations)) {
     frames[[combination]] <- merge(indices %>% 
-                                     filter(type == combinations[[combination]][1]) %>% 
+                                     filter(type == combinations[[combination]][1]) %>%
                                      mutate(type = case_when(type == combinations[[combination]][1] ~ names(combinations[combination]))),
                                    richness %>% 
                                      filter(day == 'all') %>% 
@@ -53,6 +53,7 @@ acousticIndices_richness <- combineIndicesBiodiversity(indices = acousticIndices
                                                        combinations = list(all_all = c('all', 'all'),
                                                                            not.birds_all = c('all', 'not.birds'),
                                                                            birds_morning = c('morning', 'birds'),
+                                                                           birds_afternoon = c('afternoon', 'birds'),
                                                                            birds_day = c('day', 'birds'),
                                                                            birds_all = c('all', 'birds'),
                                                                            frogs_evening = c('evening', 'frogs'),
@@ -81,6 +82,8 @@ RandomForestImportance <- list()
 
 RandomForestPredictions <- list()
 
+indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+
 pb = txtProgressBar(min = 0, max = length(unique(acousticIndices_richness$type)) * 3 * 3, initial = 0, style = 3); k <- 0
 
 for (comparison in unique(acousticIndices_richness$type)) {
@@ -89,9 +92,9 @@ for (comparison in unique(acousticIndices_richness$type)) {
   for (measure in c("richness", "shannon", "count")) {
     
     #forumlas for using just total ACI, 3kHz ACI, and 1kHz ACI values
-    formulas <- list(totalACI = as.formula(paste0(measure, " ~ ", paste(grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))),
-                     ACI_3kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))),
-                     ACI_1kHz = as.formula(paste0(measure, " ~ ", paste(grep("ACI_mean$|ACI_1000_4.|ACI_3000_6.|ACI_5000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), collapse = " + "))))
+    formulas <- list(totalACI = as.formula(paste0(measure, " ~ ", paste(grep(paste(paste0(indicesToUse, "_*"), collapse = "|"), grep("ACI_[0-9].", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), value = TRUE), collapse = " + "))),
+                     ACI_3kHz = as.formula(paste0(measure, " ~ ", paste(grep(paste(paste0(indicesToUse, "_*"), collapse = "|"), grep("ACI_mean$|ACI_1000_2.|ACI_2000_3.|ACI_3000_4.|ACI_4000_5.|ACI_5000_6.|ACI_6000_7.|ACI_7000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), value = TRUE), collapse = " + "))),
+                     ACI_1kHz = as.formula(paste0(measure, " ~ ", paste(grep(paste(paste0(indicesToUse, "_*"), collapse = "|"), grep("ACI_mean$|ACI_1000_4.|ACI_3000_6.|ACI_5000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), value = TRUE), collapse = " + "))))
     
     for (formula in 1:length(formulas)) {
       

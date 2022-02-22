@@ -97,7 +97,7 @@ for (comparison in unique(acousticIndices_richness$type)) {
                      ACI_1kHz = as.formula(paste0(measure, " ~ ", paste(grep(paste(paste0(indicesToUse, "_*"), collapse = "|"), grep("ACI_mean$|ACI_1000_4.|ACI_3000_6.|ACI_5000_8.", grep("*_mean", colnames(acousticIndices_richness), value = TRUE), value = TRUE, invert = TRUE), value = TRUE), collapse = " + "))))
     
     for (formula in 1:length(formulas)) {
-      
+      set.seed(1234)#set seed for reproducibility
       RandomForestFits[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- train(formulas[[formula]],
                                                                                                data = tmpdata,
                                                                                                method = "rf",
@@ -202,6 +202,7 @@ Plot_RMSE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACIty
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = normRMSE-normRMSE_SE, ymax = normRMSE+normRMSE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
+  scale_x_discrete(labels = c('All vertebrates', 'Non-avian', 'Birds', 'Frogs')) +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised RMSE") +
   theme_bw() +
@@ -212,6 +213,7 @@ Plot_MAE <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItyp
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = normMAE-normMAE_SE, ymax = normMAE+normMAE_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
+  scale_x_discrete(labels = c('All vertebrates', 'Non-avian', 'Birds', 'Frogs')) +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "Normalised MAE") +
   theme_bw() +
@@ -222,6 +224,7 @@ Plot_SI <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = SI-SI_SE, ymax = SI+SI_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
+  scale_x_discrete(labels = c('All vertebrates', 'Non-avian', 'Birds', 'Frogs')) +
   scale_y_continuous(limits = c(0, 120)) +
   labs(x = "Taxa", y = "Scatter Index") +
   theme_bw() +
@@ -232,6 +235,7 @@ Plot_R2 <- ggplot(data = RandomForestPerformance[RandomForestPerformance$ACItype
   geom_col(position = "dodge", color = "black") +
   geom_errorbar(aes(ymin = Rsquared-Rsquared_SE, ymax = Rsquared+Rsquared_SE), width = 0.2, size = 1, position = position_dodge(0.9)) +
   scale_fill_viridis_d() +
+  scale_x_discrete(labels = c('All vertebrates', 'Non-avian', 'Birds', 'Frogs')) +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Taxa", y = "R Squared") +
   theme_bw() +
@@ -289,18 +293,18 @@ Plot_ObservedPredicted <- egg::ggarrange(as_ggplot(text_grob(label = "richness")
                                          Plots_ObsPred[['all_all_richness']],
                                          Plots_ObsPred[['all_all_shannon']],
                                          Plots_ObsPred[['all_all_count']],
-                                         as_ggplot(text_grob(label = "all", rot = 270)),
+                                         as_ggplot(text_grob(label = "all vertebrates", rot = 270)),
                                          Plots_ObsPred[['not.birds_all_richness']],
                                          Plots_ObsPred[['not.birds_all_shannon']],
                                          Plots_ObsPred[['not.birds_all_count']],
-                                         as_ggplot(text_grob(label = "not.birds", rot = 270)),
+                                         as_ggplot(text_grob(label = "non-avian", rot = 270)),
                                          Plots_ObsPred[['birds_morning_richness']],
                                          Plots_ObsPred[['birds_morning_shannon']],
                                          Plots_ObsPred[['birds_morning_count']],
                                          as_ggplot(text_grob(label = "birds", rot = 270)),
-                                         Plots_ObsPred[['frogs_evening_richness']],
-                                         Plots_ObsPred[['frogs_evening_shannon']],
-                                         Plots_ObsPred[['frogs_evening_count']],
+                                         Plots_ObsPred[['frogs_night_richness']],
+                                         Plots_ObsPred[['frogs_night_shannon']],
+                                         Plots_ObsPred[['frogs_night_count']],
                                          as_ggplot(text_grob(label = "frogs", rot = 270)),
                                          ncol = 4,
                                          heights = c(0.1,1,1,1,1),
@@ -317,6 +321,8 @@ ggsave(filename = "outputs/figures/randomforestobspred/ObservedPredicted.png",
 #rename acoustic index names to remove '_mean'
 for (df in 1:length(RandomForestImportance)) {
   RandomForestImportance[[df]]$importance$AcousticIndex <- gsub("_mean", "", rownames(RandomForestImportance[[df]]$importance))
+  RandomForestImportance[[df]]$importance$AcousticIndex <- factor(RandomForestImportance[[df]]$importance$AcousticIndex,
+                                                                  levels = c(indicesToUse, setdiff(unique(RandomForestImportance[[df]]$importance$AcousticIndex), indicesToUse)))
 }
 
 Plots_VariableImportance <- list()
@@ -339,11 +345,11 @@ Plot_VariableImportance <- egg::ggarrange(as_ggplot(text_grob(label = "richness"
                                           Plots_VariableImportance[['all_all_richness_totalACI']] + rremove("x.text"),
                                           Plots_VariableImportance[['all_all_shannon_totalACI']] + rremove("axis.text"),
                                           Plots_VariableImportance[['all_all_count_totalACI']] + rremove("axis.text"),
-                                          as_ggplot(text_grob(label = "all", rot = 270)),
+                                          as_ggplot(text_grob(label = "all vertebrates", rot = 270)),
                                           Plots_VariableImportance[['not.birds_all_richness_totalACI']] + rremove("x.text"),
                                           Plots_VariableImportance[['not.birds_all_shannon_totalACI']] + rremove("axis.text"),
                                           Plots_VariableImportance[['not.birds_all_count_totalACI']] + rremove("axis.text"),
-                                          as_ggplot(text_grob(label = "not.birds", rot = 270)),
+                                          as_ggplot(text_grob(label = "non-avian", rot = 270)),
                                           Plots_VariableImportance[['birds_morning_richness_totalACI']] + rremove("x.text"),
                                           Plots_VariableImportance[['birds_morning_shannon_totalACI']] + rremove("axis.text"),
                                           Plots_VariableImportance[['birds_morning_count_totalACI']] + rremove("axis.text"),

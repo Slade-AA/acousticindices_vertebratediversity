@@ -71,6 +71,7 @@ for (measure in c('count', 'richness', 'shannon')) {
   for (comparison in unique(acousticIndices_richness$type)) {
     
     for (index in colnames(select(acousticIndices_richness, ends_with(c("mean"))))) {
+      set.seed(1234)#set seed for reproducibility
       bootResults <- boot(acousticIndices_richness[acousticIndices_richness$type == comparison,], 
                           statistic = function(data, i) {
                             cor(data[i, measure], data[i, index], method='pearson')
@@ -141,16 +142,7 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_birdsACI.pn
 
 
 #correlation plot for frogs using indices for evening and night
-indicesToUse <- c("ACI", 
-                  "ADI", 
-                  "AEI", 
-                  "BI", 
-                  "NDSI", 
-                  "EVN",
-                  "SH",
-                  "LFC",
-                  "MFC",
-                  "HFC")
+indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
 
 correlationPlots_frogs <- list()
 for (measure in c('richness', 'shannon', 'count')) {
@@ -193,16 +185,7 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_frogs.png",
 
 
 #correlation plot facetted by taxa (using birds_morning and frogs_evening)
-indicesToUse <- c("ACI", 
-                  "ADI", 
-                  "AEI", 
-                  "BI", 
-                  "NDSI", 
-                  "EVN",
-                  "SH",
-                  "LFC",
-                  "MFC",
-                  "HFC")
+indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
 
 correlationPlots <- list()
 for (taxa in c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening')) {
@@ -230,7 +213,7 @@ legend_bottom <- get_legend(
 correlationPlot <- plot_grid(plotlist = correlationPlots,
                              ncol = 2,
                              labels = c("a) all vertebrates",
-                                        "b) non avian vertebrates",
+                                        "b) non-avian vertebrates",
                                         "c) birds",
                                         "d) frogs"),
                              hjust = 0, label_x = 0.12) %>% 

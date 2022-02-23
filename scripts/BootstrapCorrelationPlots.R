@@ -1,3 +1,4 @@
+#Bootstrap correlation analysis of individual indices and vertebrate biodiversity
 
 # Load packages -----------------------------------------------------------
 
@@ -7,7 +8,6 @@ library(cowplot)
 library(lme4)
 library(lmerTest)
 library(boot)
-
 
 # Load indices and biodiversity data --------------------------------------
 
@@ -140,6 +140,45 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_birdsACI.pn
        correlationPlot_birdsACI,
        width = 14, height = 24, units = "cm", dpi = 800)
 
+#correlation plot for birds using indices for morning, afternoon and day
+indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+
+correlationPlots_birds <- list()
+for (measure in c('richness', 'shannon', 'count')) {
+  tmp_data <- bootCor_results[bootCor_results$Measure == measure & 
+                                bootCor_results$Index %in% indicesToUse,]
+  tmp_data <- tmp_data[grep("^birds_morning|^birds_afternoon|^birds_day", tmp_data$Taxa),]
+  tmp_data$Index <- fct_relevel(tmp_data$Index, indicesToUse)
+  
+  correlationPlots_birds[[measure]] <- ggplot(data = tmp_data, aes(x = Mean, y = Index, group = Taxa, colour = Taxa)) +
+    geom_vline(xintercept = 0, linetype = 'dashed') +
+    geom_pointrange(aes(xmin = Low, xmax = High), position = position_dodge(width = 0.4)) +
+    scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, 0.4)) +
+    scale_color_viridis_d() +
+    labs(x = "Mean correlation") +
+    theme_classic() +
+    theme(axis.title = element_blank(),
+          legend.position = "none")
+}
+
+legend_bottom <- get_legend(
+  correlationPlots_birds[['count']] + 
+    guides(color = guide_legend(nrow = 1)) +
+    theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
+)
+
+correlationPlot_birds <- plot_grid(plotlist = correlationPlots_birds,
+                                   ncol = 1,
+                                   labels = c(paste0("a) ", names(correlationPlots_birds)[1]),
+                                              paste0("b) ", names(correlationPlots_birds)[2]),
+                                              paste0("c) ", names(correlationPlots_birds)[3])),
+                                   hjust = 0, label_x = 0.12) %>% 
+  annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
+  plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
+
+ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_birds.png",
+       correlationPlot_birds,
+       width = 12, height = 24, units = "cm", dpi = 800)
 
 #correlation plot for frogs using indices for evening and night
 indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
@@ -225,45 +264,6 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_bytaxa.png"
        width = 24, height = 24, units = "cm", dpi = 800)
 
 
-
-#plot facetted by taxa - all indices
-correlationPlots <- list()
-for (taxa in c('all', 'not.birds', 'birds', 'frogs')) {
-  tmp_data <- bootCor_results[bootCor_results$Taxa == taxa,]
-  tmp_data$Measure <- factor(tmp_data$Measure, levels = c("richness", "shannon", "count"))
-  
-  correlationPlots[[taxa]] <- ggplot(data = tmp_data, aes(x = Mean, y = Index, group = Measure, colour = Measure)) +
-    geom_vline(xintercept = 0, linetype = 'dashed') +
-    geom_pointrange(aes(xmin = Low, xmax = High), position = position_dodge(width = 0.4)) +
-    scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, 0.4)) +
-    scale_color_viridis_d(labels = c('Richness', 'Shannon', 'Count')) +
-    labs(x = "Mean correlation") +
-    theme_classic() +
-    theme(axis.title = element_blank(),
-          legend.position = "none")
-}
-
-legend_bottom <- get_legend(
-  correlationPlots[['birds']] + 
-    guides(color = guide_legend(nrow = 1)) +
-    theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
-)
-
-correlationPlot <- plot_grid(plotlist = correlationPlots,
-                             ncol = 2,
-                             labels = c(paste0("a) ", names(correlationPlots)[1]),
-                                        paste0("b) ", names(correlationPlots)[2]),
-                                        paste0("c) ", names(correlationPlots)[3]),
-                                        paste0("d) ", names(correlationPlots)[4])),
-                             hjust = 0, label_x = 0.12) %>% 
-  annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
-  plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
-
-ggsave("outputs/figures/bootstrap_correlations_bytaxa_allindices.png",
-       correlationPlot,
-       width = 24, height = 24, units = "cm", dpi = 800)
-
-
 # Create table of correlation values --------------------------------------
 
 library(kableExtra)
@@ -286,10 +286,15 @@ bootCor_results_table <- bootCor_results_table %>% select(-Mean, -Low, -High) %>
 target <- c('richness', 'shannon', 'count')
 
 bootCor_results_table <- bootCor_results_table %>% arrange(factor(Measure, levels = target))
-
+write_csv(bootCor_results_table,
+          file = "outputs/figures/bootstrapcorrelations/correlationTable.csv")
 
 bootCor_results_table %>%
   kbl() %>%
   kable_classic_2(full_width = F) %>% 
-  row_spec(0, bold = T)
+  row_spec(0, bold = T) %>% 
   row_spec(5:8, italic = T)
+  
+# Save workspace for later loading ----------------------------------------
+
+save.image(file = "outputs/workspaces/BootstrapCorrelations.RData")

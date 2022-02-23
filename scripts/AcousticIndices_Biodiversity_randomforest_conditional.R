@@ -104,8 +104,6 @@ for (comparison in unique(acousticIndices_richness$type)) {
                                                                                                              data = tmpdata,
                                                                                                              method = "cforest",
                                                                                                              trControl = control,
-                                                                                                             importance = TRUE,
-                                                                                                             allowParallel = TRUE,
                                                                                                              tuneGrid = tunegrid,
                                                                                                              controls = cforest_unbiased(ntree = 1000))
       
@@ -269,7 +267,7 @@ for (predictions in c('all_all_richness', 'all_all_shannon', 'all_all_count',
                       'frogs_night_richness', 'frogs_night_shannon', 'frogs_night_count')) {
   Plots_ObsPred[[paste0(predictions)]] <- ggplot(RandomForestPredictions_cforest[RandomForestPredictions_cforest$comparison == predictions &
                                                                                    RandomForestPredictions_cforest$ACItype == 'totalACI',], 
-                                                 aes(x = predictions, y = observations)) +
+                                                 aes(x = .outcome, y = observations)) +
     geom_abline(slope = 1, linetype = 'dashed') +
     geom_smooth(method = "lm", se = FALSE) +
     geom_point() +

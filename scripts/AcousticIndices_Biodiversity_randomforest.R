@@ -367,5 +367,6 @@ ggsave(filename = "outputs/figures/randomforestvariableimportance/VariableImport
        plot = Plot_VariableImportance,
        width = 20, height = 20, units = "cm", dpi = 800)
 
-#save everything in environment for later loading
+# Save workspace for later loading ----------------------------------------
+
 save.image(file = "outputs/workspaces/RandomForest.RData")

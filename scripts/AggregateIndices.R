@@ -5,8 +5,6 @@ library(lubridate)
 
 # Read in and clean indices -----------------------------------------------
 
-setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindices_vertebratediversity")
-
 #all indices - general settings
 files_all <- list.files(path = "./rawdata/acousticindices/allindices",
                         pattern = "acousticindex.csv$",
@@ -14,7 +12,7 @@ files_all <- list.files(path = "./rawdata/acousticindices/allindices",
                         recursive = TRUE)
 
 acousticIndices_all <- lapply(files_all, read_csv)
-names(acousticIndices_all) <- c("fall.2021", "spring.2021")
+names(acousticIndices_all) <- c("fall.2021", "spring.2021", "spring.2021") #Tarcutta Spring.2021 indices are in a seperate folder - read in as 3rd file
 acousticIndices_all <- bind_rows(acousticIndices_all, .id = "sampling.period")
 acousticIndices_all$sampling.period <- factor(acousticIndices_all$sampling.period)
 
@@ -49,13 +47,13 @@ acousticIndices <- full_join(acousticIndices_all, acousticIndices_aci, by = c('s
 
 # Data cleaning and new columns -------------------------------------------
 
-#remove any rows with durations less than 58 seconds? - from short recordings?
-acousticIndices <- acousticIndices[!acousticIndices$DURATION < 58,]
+#remove any rows with durations less than 55 seconds? - from short recordings?
+acousticIndices <- acousticIndices[!acousticIndices$DURATION < 55,]
 
 
 #create proper date time column
 acousticIndices$DATETIME <- as.POSIXlt(paste0(gsub("*T.*", "", acousticIndices$`IN FILE`), 
-                                              gsub(".*T(.+)\\+.*", "\\1", acousticIndices$`IN FILE`)), 
+                                              gsub(".*T([0-9]{6})\\+.*", "\\1", acousticIndices$`IN FILE`)), 
                                        format = "%Y%m%d%H%M%S") + acousticIndices$TIME
 
 #remove times that don't line up with the minute?
@@ -79,9 +77,10 @@ acousticIndices_surveys <- rbind(acousticIndices %>% filter(Site == "Duval" & DA
                                  acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-07-05 12:00:00" & DATETIME < "2021-07-12 12:00:00"),
                                  acousticIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-10-09 12:00:00" & DATETIME < "2021-10-16 12:00:00"), #spring.2021
                                  acousticIndices %>% filter(Site == "Undara" & DATETIME >= "2021-09-29 12:00:00" & DATETIME < "2021-10-06 12:00:00"),
-                                 acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-11-09 12:00:00" & DATETIME < "2021-11-16 12:00:00"))
+                                 acousticIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-11-09 12:00:00" & DATETIME < "2021-11-16 12:00:00"),
+                                 acousticIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-10-18 12:00:00" & DATETIME < "2021-10-25 12:00:00"))
 
-acousticIndices_surveys %>% group_by(sampling.period, Site) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
+acousticIndices_surveys %>% group_by(Site, sampling.period) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
 
 
 # Export data set ---------------------------------------------------------

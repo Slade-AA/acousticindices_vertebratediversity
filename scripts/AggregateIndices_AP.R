@@ -23,9 +23,12 @@ for (file in summaryIndicesFiles) {
   #extract sensor name from folder structure
   tmp$Sensor <- gsub(".*_[0-9]{4}\\/(.{4})\\/.*", "\\1", dirname(file))
   
+  #remove any rows with durations less than 55 seconds? - from short recordings?
+  tmp <- tmp[!tmp$SegmentDurationSeconds < 55,]
+  
   #extract date and time from filename and column in csv
   tmp$DATETIME <- as.POSIXlt(paste0(gsub("T.*", "", basename(file)), 
-                                    gsub(".*T(.+)\\+.*", "\\1", basename(file))), 
+                                    gsub(".*T([0-9]{6})\\+.*", "\\1", basename(file))), 
                              format = "%Y%m%d%H%M%S") + tmp$ResultStartSeconds
   
   #remove times that don't line up with the minute
@@ -45,14 +48,18 @@ summaryIndices <- do.call(rbind, summaryIndices)
 
 # Subset indices to survey periods ----------------------------------------
 
-acousticIndices_surveys <- rbind(summaryIndices %>% filter(Site == "Duval" & DATETIME >= "2021-04-18 12:00:00" & DATETIME < "2021-04-25 12:00:00"), #fall.2021
-                                 summaryIndices %>% filter(Site == "Mourachan" & DATETIME >= "2021-05-09 12:00:00" & DATETIME < "2021-05-16 12:00:00"),
-                                 summaryIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-06-14 12:00:00" & DATETIME < "2021-06-21 12:00:00"),
-                                 summaryIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-04-29 12:00:00" & DATETIME < "2021-05-06 12:00:00"),
-                                 summaryIndices %>% filter(Site == "Undara" & DATETIME >= "2021-06-03 12:00:00" & DATETIME < "2021-06-10 12:00:00"),
-                                 summaryIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-07-05 12:00:00" & DATETIME < "2021-07-12 12:00:00"))
-                                 
-acousticIndices_surveys %>% group_by(Site) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
+acousticIndices_surveys <- rbind(summaryIndices %>% filter(Site == "Duval" & DATETIME >= "2021-04-18 12:00:00" & DATETIME < "2021-04-25 12:00:00") %>% mutate(sampling.period = 'fall.2021'), #fall.2021
+                                 summaryIndices %>% filter(Site == "Mourachan" & DATETIME >= "2021-05-09 12:00:00" & DATETIME < "2021-05-16 12:00:00") %>% mutate(sampling.period = 'fall.2021'),
+                                 summaryIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-06-14 12:00:00" & DATETIME < "2021-06-21 12:00:00") %>% mutate(sampling.period = 'fall.2021'),
+                                 summaryIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-04-29 12:00:00" & DATETIME < "2021-05-06 12:00:00") %>% mutate(sampling.period = 'fall.2021'),
+                                 summaryIndices %>% filter(Site == "Undara" & DATETIME >= "2021-06-03 12:00:00" & DATETIME < "2021-06-10 12:00:00") %>% mutate(sampling.period = 'fall.2021'),
+                                 summaryIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-07-05 12:00:00" & DATETIME < "2021-07-12 12:00:00") %>% mutate(sampling.period = 'fall.2021'),
+                                 summaryIndices %>% filter(Site == "Rinyirru" & DATETIME >= "2021-10-09 12:00:00" & DATETIME < "2021-10-16 12:00:00") %>% mutate(sampling.period = 'spring.2021'), #spring.2021
+                                 summaryIndices %>% filter(Site == "Undara" & DATETIME >= "2021-09-29 12:00:00" & DATETIME < "2021-10-06 12:00:00") %>% mutate(sampling.period = 'spring.2021'),
+                                 summaryIndices %>% filter(Site == "Wambiana" & DATETIME >= "2021-11-09 12:00:00" & DATETIME < "2021-11-16 12:00:00") %>% mutate(sampling.period = 'spring.2021'),
+                                 summaryIndices %>% filter(Site == "Tarcutta" & DATETIME >= "2021-10-18 12:00:00" & DATETIME < "2021-10-25 12:00:00") %>% mutate(sampling.period = 'spring.2021'))
+
+acousticIndices_surveys %>% group_by(Site, sampling.period) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
 
 
 # Export data set ---------------------------------------------------------

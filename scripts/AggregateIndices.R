@@ -29,7 +29,8 @@ names(acousticIndices_aci) <- paste0(gsub(".*acionly\\/(.*)\\/2.*", "\\1", dirna
                                      gsub(".*ACI", "", dirname(files_aci)))
 
 acousticIndices_aci <- bind_rows(list(fall.2021 = acousticIndices_aci[grep("fall", names(acousticIndices_aci))] %>% reduce(full_join, by = grep("ACI*", colnames(acousticIndices_aci[[1]]), value = TRUE, invert = TRUE)),
-                                      spring.2021 = acousticIndices_aci[grep("spring", names(acousticIndices_aci))] %>% reduce(full_join, by = grep("ACI*", colnames(acousticIndices_aci[[1]]), value = TRUE, invert = TRUE))),
+                                      spring.2021 = bind_rows(list(acousticIndices_aci[grep("spring", names(acousticIndices_aci))][1:10] %>% reduce(full_join, by = grep("ACI*", colnames(acousticIndices_aci[[1]]), value = TRUE, invert = TRUE)),
+                                                                   acousticIndices_aci[grep("spring", names(acousticIndices_aci))][11:20] %>% reduce(full_join, by = grep("ACI*", colnames(acousticIndices_aci[[1]]), value = TRUE, invert = TRUE))))),
                                  .id = "sampling.period")
 acousticIndices_aci$sampling.period <- factor(acousticIndices_aci$sampling.period)
 
@@ -44,6 +45,7 @@ acousticIndices_aci$Sensor <- factor(gsub(".*[0-9|ING]\\\\(.+?)\\\\.*", "\\1", a
 
 acousticIndices <- full_join(acousticIndices_all, acousticIndices_aci, by = c('sampling.period', 'IN FILE', 'CHANNEL', 'OFFSET', 'DURATION', 'DATE', 'TIME', 'HOUR', 'Site', 'Sensor'))
 
+#NOTE - as of 2022/03/15 frequency specific ACI values haven't been calculated for all Tarcutta recordings available but they are for the 1 week survey period
 
 # Data cleaning and new columns -------------------------------------------
 
@@ -82,6 +84,7 @@ acousticIndices_surveys <- rbind(acousticIndices %>% filter(Site == "Duval" & DA
 
 acousticIndices_surveys %>% group_by(Site, sampling.period) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
 
+SiteSensorDataAvailability <- acousticIndices_surveys %>% group_by(Site, Sensor, sampling.period) %>% summarise(n = n())
 
 # Export data set ---------------------------------------------------------
 

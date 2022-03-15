@@ -7,20 +7,27 @@ library(seewave) #used to generate spectrogram
 indiceDuration <- 60
 
 #Determine audio files to use
-baseInputDirectory <- "G:/audio_recorder_downloads_trip2_wavs"
+baseInputDirectory <- "G:/audio_recorder_downloads_trip2_wavs/Tarcutta_Oct_2021"
 audioDirs <- list.dirs(baseInputDirectory, recursive = FALSE)
-audioDirs <- audioDirs[grep("^G:/audio_recorder_downloads_trip2_wavs/_.*", audioDirs, invert = TRUE)]
+audioDirs <- audioDirs[grep("^G:/audio_recorder_downloads_trip2_wavs/Tarcutta_Oct_2021/_.*", audioDirs, invert = TRUE)]
 
 audioFiles <- list.files(audioDirs, full.names = TRUE, recursive = TRUE)
+
+audioFiles <- audioFiles[which(as.POSIXlt(paste0(gsub("T.*", "", basename(audioFiles)), 
+                                                 gsub(".*T([0-9]{6})\\+.*", "\\1", basename(audioFiles))), 
+                                          format = "%Y%m%d%H%M%S") >= "2021-10-18 12:00:00" & 
+                                 as.POSIXlt(paste0(gsub("T.*", "", basename(audioFiles)), 
+                                                   gsub(".*T([0-9]{6})\\+.*", "\\1", basename(audioFiles))), 
+                                            format = "%Y%m%d%H%M%S") < "2021-10-25 12:00:00")]
 
 #Set the frequency limits to use
 #aciLimits <- list(default = c(0, 0)) #default is c(0, 0)
 #aciLimits <- list(low = c(1000, 4000), mid = c(3000, 6000), high = c(5000, 8000))
-aciLimits <- list(#f01 = c(1000, 2000),
-                  #f02 = c(2000, 3000),
-                  #f03 = c(3000, 4000),
-                  #f04 = c(4000, 5000),
-                  #f05 = c(5000, 6000),
+aciLimits <- list(f01 = c(1000, 2000),
+                  f02 = c(2000, 3000),
+                  f03 = c(3000, 4000),
+                  f04 = c(4000, 5000),
+                  f05 = c(5000, 6000),
                   f06 = c(6000, 7000),
                   f07 = c(7000, 8000))
 

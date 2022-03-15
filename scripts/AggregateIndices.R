@@ -89,4 +89,4 @@ write.csv(SiteSensorDataAvailability, file = "outputs/SiteSensorDataAvailability
 
 # Export data set ---------------------------------------------------------
 
-save(acousticIndices_surveys, file = paste0("./outputs/data/", Sys.Date(), "_acousticIndices.RData"))
+save(acousticIndices_surveys, file = paste0("./outputs/data/fullsurveyperiod/", Sys.Date(), "_acousticIndices.RData"))

@@ -85,6 +85,7 @@ acousticIndices_surveys <- rbind(acousticIndices %>% filter(Site == "Duval" & DA
 acousticIndices_surveys %>% group_by(Site, sampling.period) %>% summarise(n = n()) #each site/sampling.period should have ~40320 rows
 
 SiteSensorDataAvailability <- acousticIndices_surveys %>% group_by(Site, Sensor, sampling.period) %>% summarise(n = n())
+write.csv(SiteSensorDataAvailability, file = "outputs/SiteSensorDataAvailability.csv", quote = F, row.names = F)
 
 # Export data set ---------------------------------------------------------
 

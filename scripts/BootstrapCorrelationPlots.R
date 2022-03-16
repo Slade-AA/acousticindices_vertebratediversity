@@ -11,10 +11,8 @@ library(boot)
 
 # Load indices and biodiversity data --------------------------------------
 
-setwd("C:/Users/jc696551/OneDrive - James Cook University/Projects/acousticindices_vertebratediversity")
-
 #summary indices
-files <- file.info(list.files("./outputs/data/", pattern = ".*_acousticIndices_summary.RData$", full.names = TRUE)) #list files
+files <- file.info(list.files("./outputs/data/weekly_summaries/", pattern = ".*_acousticIndices_summary.RData$", full.names = TRUE)) #list files
 latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
 
 load(latestFile)
@@ -72,7 +70,7 @@ for (measure in c('count', 'richness', 'shannon')) {
     
     for (index in colnames(select(acousticIndices_richness, ends_with(c("mean"))))) {
       set.seed(1234)#set seed for reproducibility
-      bootResults <- boot(acousticIndices_richness[acousticIndices_richness$type == comparison,], 
+      bootResults <- boot(acousticIndices_richness[acousticIndices_richness$type == comparison & acousticIndices_richness$p > 0.7,], 
                           statistic = function(data, i) {
                             cor(data[i, measure], data[i, index], method='pearson')
                           },
@@ -92,8 +90,21 @@ for (measure in c('count', 'richness', 'shannon')) {
 
 bootCor_results <- do.call(rbind, bootCor_results)
 
-
 # Plot correlation bootstrap results --------------------------------------
+
+#create acronymns for AP indices
+axisLabels <- c("Activity" = "ACT", 
+                "EventsPerSecond" = "ENV", 
+                "SpectralCentroid" = "CENT", 
+                "HighFreqCover" = "HFC", 
+                "MidFreqCover" = "MFC", 
+                "LowFreqCover" = "LFC", 
+                "AcousticComplexity" = "ACI", 
+                "TemporalEntropy" = "ENT", 
+                "ClusterCount" = "CLS", 
+                "ThreeGramCount" = "TGC", 
+                "Ndsi" = "NDSI", 
+                "SptDensity" = "SPD")
 
 #correlation plot for birds with different ACI frequency bands
 indicesToUse <- c("ACI", 
@@ -141,7 +152,10 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_birdsACI.pn
        width = 14, height = 24, units = "cm", dpi = 800)
 
 #correlation plot for birds using indices for morning, afternoon and day
-indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+#indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+indicesToUse <- c('ADI', 'AEI', 'BI', 'NDSI', 'SH', 
+                  'Activity', 'EventsPerSecond', 'LowFreqCover', 'MidFreqCover', 'HighFreqCover', 
+                  'AcousticComplexity', 'ClusterCount', 'SptDensity')
 
 correlationPlots_birds <- list()
 for (measure in c('richness', 'shannon', 'count')) {
@@ -154,6 +168,7 @@ for (measure in c('richness', 'shannon', 'count')) {
     geom_vline(xintercept = 0, linetype = 'dashed') +
     geom_pointrange(aes(xmin = Low, xmax = High), position = position_dodge(width = 0.4)) +
     scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, 0.4)) +
+    scale_y_discrete(labels = axisLabels) +
     scale_color_viridis_d() +
     labs(x = "Mean correlation") +
     theme_classic() +
@@ -181,7 +196,10 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_birds.png",
        width = 12, height = 24, units = "cm", dpi = 800)
 
 #correlation plot for frogs using indices for evening and night
-indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+#indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+indicesToUse <- c('ADI', 'AEI', 'BI', 'NDSI', 'SH', 
+                  'Activity', 'EventsPerSecond', 'LowFreqCover', 'MidFreqCover', 'HighFreqCover', 
+                  'AcousticComplexity', 'ClusterCount', 'SptDensity')
 
 correlationPlots_frogs <- list()
 for (measure in c('richness', 'shannon', 'count')) {
@@ -193,7 +211,8 @@ for (measure in c('richness', 'shannon', 'count')) {
   correlationPlots_frogs[[measure]] <- ggplot(data = tmp_data, aes(x = Mean, y = Index, group = Taxa, colour = Taxa)) +
     geom_vline(xintercept = 0, linetype = 'dashed') +
     geom_pointrange(aes(xmin = Low, xmax = High), position = position_dodge(width = 0.4)) +
-    scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, 0.4)) +
+    scale_x_continuous(limits = c(-1, 1), breaks = seq(-1, 1, 0.2)) +
+    scale_y_discrete(labels = axisLabels) +
     scale_color_viridis_d() +
     labs(x = "Mean correlation") +
     theme_classic() +
@@ -223,11 +242,14 @@ ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_frogs.png",
 
 
 
-#correlation plot facetted by taxa (using birds_morning and frogs_evening)
-indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+#correlation plot facetted by taxa (using birds_day and frogs_night)
+#indicesToUse <- c('ACI', 'ADI', 'AEI', 'BI', 'NDSI', 'EVN', 'SH', 'LFC', 'MFC', 'HFC')
+indicesToUse <- c('ADI', 'AEI', 'BI', 'NDSI', 'SH', 
+                  'Activity', 'EventsPerSecond', 'LowFreqCover', 'MidFreqCover', 'HighFreqCover', 
+                  'AcousticComplexity', 'ClusterCount', 'SptDensity')
 
 correlationPlots <- list()
-for (taxa in c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening')) {
+for (taxa in c('all_all', 'not.birds_all', 'birds_day', 'frogs_night')) {
   tmp_data <- bootCor_results[bootCor_results$Taxa == taxa & bootCor_results$Index %in% indicesToUse,]
   tmp_data$Measure <- factor(tmp_data$Measure, levels = c("richness", "shannon", "count"))
   tmp_data$Index <- fct_relevel(tmp_data$Index, indicesToUse)
@@ -235,7 +257,8 @@ for (taxa in c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening')) {
   correlationPlots[[taxa]] <- ggplot(data = tmp_data, aes(x = Mean, y = Index, group = Measure, colour = Measure)) +
     geom_vline(xintercept = 0, linetype = 'dashed') +
     geom_pointrange(aes(xmin = Low, xmax = High), position = position_dodge(width = 0.4)) +
-    scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, 0.4)) +
+    scale_x_continuous(limits = c(-1, 1), breaks = seq(-1, 1, 0.2)) +
+    scale_y_discrete(labels = axisLabels) +
     scale_color_viridis_d(labels = c('Richness', 'Shannon', 'Count')) +
     labs(x = "Mean correlation") +
     theme_classic() +
@@ -255,7 +278,7 @@ correlationPlot <- plot_grid(plotlist = correlationPlots,
                                         "b) non-avian vertebrates",
                                         "c) birds",
                                         "d) frogs"),
-                             hjust = 0, label_x = 0.12) %>% 
+                             hjust = 0, label_x = 0.12, label_y = 1.02) %>% 
   annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
   plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
@@ -270,7 +293,7 @@ library(kableExtra)
 
 bootCor_results_table <- bootCor_results %>% 
   filter(Index %in% indicesToUse) %>% 
-  filter(Taxa %in% c('all_all', 'not.birds_all', 'birds_morning', 'frogs_evening'))
+  filter(Taxa %in% c('all_all', 'not.birds_all', 'birds_day', 'frogs_night'))
 bootCor_results_table$Index <- fct_relevel(bootCor_results_table$Index, indicesToUse)
 
 
@@ -288,12 +311,6 @@ target <- c('richness', 'shannon', 'count')
 bootCor_results_table <- bootCor_results_table %>% arrange(factor(Measure, levels = target))
 write_csv(bootCor_results_table,
           file = "outputs/figures/bootstrapcorrelations/correlationTable.csv")
-
-bootCor_results_table %>%
-  kbl() %>%
-  kable_classic_2(full_width = F) %>% 
-  row_spec(0, bold = T) %>% 
-  row_spec(5:8, italic = T)
   
 # Save workspace for later loading ----------------------------------------
 

@@ -22,7 +22,7 @@ load(latestFile)
 richness <- read_csv("./rawdata/biodiversity/richness_diversity_updated.csv") #load richness
 
 #format richness to match indices
-richness <- richness %>% rename(Site = site, Sensor = original.plot, richness = Richness, shannon = Shannon, type = comparison)
+richness <- richness %>% rename(Site = site, Sensor = original.plot, richness = Richness, shannon = Shannon, type = taxa)
 richness <- richness %>% mutate(sampling.period = paste0(season, ".2021"))
 richness <- richness %>% mutate(type = recode(type,
                                               'bird' = 'birds', 'frog' = 'frogs'))
@@ -167,3 +167,7 @@ for (combination in 1:nrow(plot_combinations)) {
          plot = Plot,
          width = 22.5, height = 12.5, units = "cm", dpi = 1200)
 }
+
+# Save workspace for later loading ----------------------------------------
+
+save.image(file = "outputs/workspaces/glmmTMB_0-1.RData")

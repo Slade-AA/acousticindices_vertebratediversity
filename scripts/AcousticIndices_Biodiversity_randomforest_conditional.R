@@ -123,7 +123,7 @@ for (comparison in unique(acousticIndices_richness$type)) {
                                                                                                  maxResponse = max(tmpdata[measure]))))
       
       RandomForestImportance_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- varImp(RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]])
-      RandomForestImportance_cforest_conditional[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- permimp(RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$finalModel, conditional = TRUE, progressBar = FALSE)
+      RandomForestImportance_cforest_conditional[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- permimp(RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$finalModel, conditional = TRUE, progressBar = FALSE, scaled = TRUE)
       
       RandomForestPredictions_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]] <- data.frame(predictions = predict(RandomForestFits_cforest[[paste0(comparison, "_", measure, "_", names(formulas)[[formula]])]]$finalModel),
                                                                                                                          observations = tmpdata[[measure]],

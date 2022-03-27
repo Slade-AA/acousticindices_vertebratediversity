@@ -255,14 +255,17 @@ legend_bottom <- get_legend(
     theme(legend.position = "bottom", legend.direction = "horizontal", legend.title = element_blank())
 )
 
-Plot_AllRF <- plot_grid(Plot_RMSE, Plot_MAE, Plot_SI, Plot_R2,
-                        ncol = 2)
+Plot_AllRF <- plot_grid(Plot_RMSE, 
+                        #Plot_MAE, 
+                        Plot_SI, 
+                        Plot_R2,
+                        ncol = 3)
 Plot_AllRF <- plot_grid(Plot_AllRF, legend_bottom,
                         ncol = 1, 
                         rel_heights = c(1, 0.1))
 ggsave(filename = "outputs/figures/randomforestperformance/AllComparisons_cforest.png",
        plot = Plot_AllRF,
-       width = 24, height = 20, units = "cm", dpi = 800)
+       width = 30, height = 10, units = "cm", dpi = 800)
 
 # Observed vs predicted plots ---------------------------------------------
 

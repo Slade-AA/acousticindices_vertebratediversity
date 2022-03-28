@@ -53,7 +53,7 @@ acousticIndices_7days <- AP_Kaleidoscope %>%
   group_by(Site, Sensor, sampling.period, n, p) %>% 
   summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
                     starts_with("ACI")), 
-               list(mean = mean, median = median))
+               list(mean = mean, median = median, iqr = IQR, sd = sd))
 
 #Summarise morning 6am-9am
 acousticIndices_morning <- AP_Kaleidoscope %>% 
@@ -63,7 +63,7 @@ acousticIndices_morning <- AP_Kaleidoscope %>%
   group_by(Site, Sensor, sampling.period, n, p) %>% 
   summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
                     starts_with("ACI")), 
-               list(mean = mean, median = median))
+               list(mean = mean, median = median, iqr = IQR, sd = sd))
 
 #Summarise afternoon 3pm-6pm
 acousticIndices_afternoon <- AP_Kaleidoscope %>% 
@@ -73,7 +73,7 @@ acousticIndices_afternoon <- AP_Kaleidoscope %>%
   group_by(Site, Sensor, sampling.period, n, p) %>% 
   summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
                     starts_with("ACI")), 
-               list(mean = mean, median = median))
+               list(mean = mean, median = median, iqr = IQR, sd = sd))
 
 #Summarise evening 6pm-9pm
 acousticIndices_evening <- AP_Kaleidoscope %>% 
@@ -83,7 +83,7 @@ acousticIndices_evening <- AP_Kaleidoscope %>%
   group_by(Site, Sensor, sampling.period, n, p) %>% 
   summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
                     starts_with("ACI")), 
-               list(mean = mean, median = median))
+               list(mean = mean, median = median, iqr = IQR, sd = sd))
 
 #Summarise day 6am-6pm
 acousticIndices_day <- AP_Kaleidoscope %>% 
@@ -93,7 +93,7 @@ acousticIndices_day <- AP_Kaleidoscope %>%
   group_by(Site, Sensor, sampling.period, n, p) %>% 
   summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
                     starts_with("ACI")), 
-               list(mean = mean, median = median))
+               list(mean = mean, median = median, iqr = IQR, sd = sd))
 
 #Summarise night 6pm-6am
 acousticIndices_night <- AP_Kaleidoscope %>% 
@@ -103,7 +103,7 @@ acousticIndices_night <- AP_Kaleidoscope %>%
   group_by(Site, Sensor, sampling.period, n, p) %>% 
   summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
                     starts_with("ACI")), 
-               list(mean = mean, median = median))
+               list(mean = mean, median = median, iqr = IQR, sd = sd))
 
 #bind in single data frame
 acousticIndices_summary <- bind_rows(list(all = acousticIndices_7days, 

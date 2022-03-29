@@ -7,17 +7,31 @@ library(viridis)
 
 # Load data ---------------------------------------------------------------
 
-files <- file.info(list.files("./outputs/data/", pattern = ".*_acousticIndices.RData$", full.names = TRUE)) #list files
+files <- file.info(list.files("./outputs/data/fullsurveyperiod", pattern = ".*_acousticIndices.RData$", full.names = TRUE)) #list files
 latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
 
 load(latestFile)
 
+files <- file.info(list.files("./outputs/data/fullsurveyperiod", pattern = ".*_acousticIndices_AP.RData$", full.names = TRUE)) #list files
+latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
+
+load(latestFile)
+
+#join AP and Kaleidoscope indices
+AP_Kaleidoscope <- full_join(acousticIndices_surveys_AP, acousticIndices_surveys,
+                             by = c('sampling.period',
+                                    'Site',
+                                    'Sensor',
+                                    'DATETIME',
+                                    'TIME_NEW'))
+AP_Kaleidoscope <- AP_Kaleidoscope[complete.cases(AP_Kaleidoscope), ]
+
 # Create plots ------------------------------------------------------------
 
-SamplingTrips <- unique(acousticIndices_surveys[c("Site", "sampling.period")])
+SamplingTrips <- unique(AP_Kaleidoscope[c("Site", "sampling.period")])
 
 for (trip in 1:nrow(SamplingTrips)) {
-  data <- acousticIndices_surveys[acousticIndices_surveys$Site == SamplingTrips$Site[trip] & acousticIndices_surveys$sampling.period == SamplingTrips$sampling.period[trip],]
+  data <- AP_Kaleidoscope[AP_Kaleidoscope$Site == SamplingTrips$Site[trip] & AP_Kaleidoscope$sampling.period == SamplingTrips$sampling.period[trip],]
   
   
   Plot_ACI <- ggplot(data = data,

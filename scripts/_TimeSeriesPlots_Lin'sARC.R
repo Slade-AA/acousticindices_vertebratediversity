@@ -59,7 +59,7 @@ Plot_Tarcutta_WetA_ACI <- ggplot() +
   annotate(geom = "text", label = "Bird richness = 54\nMean ACI = 163", x = "19:00:00", y = 174, size = 3) +
   annotate(geom = "text", label = "Bird richness = 26\nMean ACI = 158", x = "19:00:00", y = 149, size = 3) +
   xlab("Time") +
-  ylab("Acoustic Complexityt (ACI)") +
+  ylab("Acoustic Complexity (ACI)") +
   coord_cartesian(ylim = c(145, 175)) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -221,3 +221,20 @@ ggsave(filename = "C:/Users/jc696551/Documents/TimeSeries_ACI&CLS.png",
        plot = CombinedPlot,
        width = 20, height = 20, units = "cm", dpi = 800)
 
+
+
+
+
+#load rf workspace
+
+Plot_Birds_rf <- egg::ggarrange(as_ggplot(text_grob(label = "richness")),
+                                as_ggplot(text_grob(label = "count")),
+                                Plots_ObsPred$birds_day_richness,
+                                Plots_ObsPred$birds_day_count,
+                                ncol = 2, heights = c(0.1, 1)) %>% 
+  annotate_figure(bottom = "Predicted",
+                  left = "Observed")
+
+ggsave(filename = "C:/Users/jc696551/Documents/Plot_Birds_rf.png",
+       plot = Plot_Birds_rf,
+       width = 14, height = 7, units = "cm", dpi = 800)

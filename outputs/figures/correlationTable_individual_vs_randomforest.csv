@@ -1,0 +1,13 @@
+Taxa,Measure,HighestIndividualSpearmanCorrelation,Index,rf_obspred_SpearmanCorrelation
+all_all,richness,0.68,SPD,0.76
+all_all,shannon,0.55,ACT,0.63
+all_all,count,0.71,ACI,0.81
+birds_day,richness,0.7,CLS,0.77
+birds_day,shannon,0.62,CLS,0.71
+birds_day,count,0.77,MFC,0.81
+frogs_night,richness,0.56,SPD,0.68
+frogs_night,shannon,0.37,SPD,0.52
+frogs_night,count,0.66,SPD,0.71
+not.birds_all,richness,0.59,HFC,0.72
+not.birds_all,shannon,0.44,HFC,0.6
+not.birds_all,count,0.59,NDSI,0.64

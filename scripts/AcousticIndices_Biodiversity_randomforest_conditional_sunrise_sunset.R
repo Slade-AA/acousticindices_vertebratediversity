@@ -368,6 +368,30 @@ ggsave(filename = "outputs/figures/randomforestobspred_sunrise_sunset/ObservedPr
        plot = Plot_ObservedPredicted,
        width = 20, height = 20, units = "cm", dpi = 800)
 
+#Calculate spearman rank correlations for observed vs predicted values from random forest
+randomforest_spearman <- list()
+for (comparison in unique(RandomForestPredictions_cforest$comparison)) {
+  randomforest_spearman[[comparison]] <- data.frame(rf_obs_pred = cor(RandomForestPredictions_cforest$observations[RandomForestPredictions_cforest$comparison == comparison & RandomForestPredictions_cforest$ACItype == 'totalACI'],
+                                                                      RandomForestPredictions_cforest$.outcome[RandomForestPredictions_cforest$comparison == comparison & RandomForestPredictions_cforest$ACItype == 'totalACI'],
+                                                                      method = "spearman"))
+}
+
+randomforest_spearman <- do.call(rbind, randomforest_spearman) %>% rownames_to_column(var = "comparison")
+
+save(randomforest_spearman, file = "outputs/figures/randomforestobspred_sunrise_sunset/randomforest_spearman.RData")
+
+
+#Load individual bootstrap correlation values and make table
+
+load(file = "outputs/figures/bootstrapcorrelations_sunrise_sunset/bestindex_spearman.RData")
+
+spearman_individual_rf_comparison <- left_join(y = bestindex_spearman, x = randomforest_spearman)
+
+write.csv(spearman_individual_rf_comparison[,c(4,5,6,3,2)] %>% mutate(across(where(is.numeric), round, 2)), 
+          file = "outputs/figures/correlationTable_individual_vs_randomforest_sunrise_sunset.csv",
+          row.names = FALSE, quote = FALSE)
+
+
 # Variable importance -----------------------------------------------------
 
 #create acronymns for AP indices

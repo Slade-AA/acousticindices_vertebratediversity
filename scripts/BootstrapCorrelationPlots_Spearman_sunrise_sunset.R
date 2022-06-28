@@ -312,6 +312,19 @@ target <- c('richness', 'shannon', 'count')
 bootCor_results_table <- bootCor_results_table %>% arrange(factor(Measure, levels = target))
 write_csv(bootCor_results_table,
           file = "outputs/figures/bootstrapcorrelations_sunrise_sunset/correlationTable_spearman.csv")
+
+
+
+#Calculate spearman rank correlations for best acoustic index per comparison
+bootCor_results <- bootCor_results %>% unite("comparison", Taxa:Measure, remove = FALSE)
+
+indicesToUse <- c('ADI', 'AEI', 'BI', 'NDSI', 'SH', 
+                  'Activity', 'EventsPerSecond', 'LowFreqCover', 'MidFreqCover', 'HighFreqCover', 
+                  'AcousticComplexity', 'ClusterCount', 'SptDensity')
+
+bestindex_spearman <- bootCor_results %>% filter(Index %in% indicesToUse) %>% select(-Low, -High) %>% group_by(comparison) %>% top_n(1, Mean)
+
+save(bestindex_spearman, file = "outputs/figures/bootstrapcorrelations_sunrise_sunset/bestindex_spearman.RData")
   
 # Save workspace for later loading ----------------------------------------
 

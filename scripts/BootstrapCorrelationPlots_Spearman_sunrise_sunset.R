@@ -12,7 +12,7 @@ library(boot)
 # Load indices and biodiversity data --------------------------------------
 
 #summary indices
-files <- file.info(list.files("./outputs/data/weekly_summaries/", pattern = ".*_acousticIndices_summary.RData$", full.names = TRUE)) #list files
+files <- file.info(list.files("./outputs/data/weekly_summaries/", pattern = ".*_acousticIndices_summary_sunrise_sunset.RData$", full.names = TRUE)) #list files
 latestFile <- rownames(files)[which.max(files$mtime)] #determine most recent file to use for loading
 
 load(latestFile)
@@ -53,11 +53,11 @@ acousticIndices_richness <- combineIndicesBiodiversity(indices = acousticIndices
                                                        richness = richness,
                                                        combinations = list(all_all = c('all', 'all'),
                                                                            not.birds_all = c('all', 'not.birds'),
-                                                                           birds_morning = c('morning', 'birds'),
-                                                                           birds_afternoon = c('afternoon', 'birds'),
+                                                                           #birds_morning = c('morning', 'birds'),
+                                                                           #birds_afternoon = c('afternoon', 'birds'),
                                                                            birds_day = c('day', 'birds'),
-                                                                           birds_all = c('all', 'birds'),
-                                                                           frogs_evening = c('evening', 'frogs'),
+                                                                           #birds_all = c('all', 'birds'),
+                                                                           #frogs_evening = c('evening', 'frogs'),
                                                                            frogs_night = c('night', 'frogs')))
 acousticIndices_richness <- acousticIndices_richness %>% filter(p > 0.7) #remove datapoints where less than 70% of audio was available
 
@@ -148,7 +148,7 @@ correlationPlot_birdsACI <- plot_grid(plotlist = correlationPlots_birdsACI,
   annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
   plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
-ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_birdsACI_spearman.png",
+ggsave("outputs/figures/bootstrapcorrelations_sunrise_sunset/bootstrap_correlations_birdsACI_spearman.png",
        correlationPlot_birdsACI,
        width = 14, height = 24, units = "cm", dpi = 800)
 
@@ -192,7 +192,7 @@ correlationPlot_birds <- plot_grid(plotlist = correlationPlots_birds,
   annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
   plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
-ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_birds_spearman.png",
+ggsave("outputs/figures/bootstrapcorrelations_sunrise_sunset/bootstrap_correlations_birds_spearman.png",
        correlationPlot_birds,
        width = 12, height = 24, units = "cm", dpi = 800)
 
@@ -236,7 +236,7 @@ correlationPlot_frogs <- plot_grid(plotlist = correlationPlots_frogs,
   annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
   plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
-ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_frogs_spearman.png",
+ggsave("outputs/figures/bootstrapcorrelations_sunrise_sunset/bootstrap_correlations_frogs_spearman.png",
        correlationPlot_frogs,
        width = 12, height = 24, units = "cm", dpi = 800)
 
@@ -283,7 +283,7 @@ correlationPlot <- plot_grid(plotlist = correlationPlots,
   annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
   plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
-ggsave("outputs/figures/bootstrapcorrelations/bootstrap_correlations_bytaxa_spearman.png",
+ggsave("outputs/figures/bootstrapcorrelations_sunrise_sunset/bootstrap_correlations_bytaxa_spearman.png",
        correlationPlot,
        width = 24, height = 24, units = "cm", dpi = 800)
 
@@ -311,8 +311,8 @@ target <- c('richness', 'shannon', 'count')
 
 bootCor_results_table <- bootCor_results_table %>% arrange(factor(Measure, levels = target))
 write_csv(bootCor_results_table,
-          file = "outputs/figures/bootstrapcorrelations/correlationTable_spearman.csv")
+          file = "outputs/figures/bootstrapcorrelations_sunrise_sunset/correlationTable_spearman.csv")
   
 # Save workspace for later loading ----------------------------------------
 
-save.image(file = "outputs/workspaces/BootstrapCorrelations_spearman.RData")
+save.image(file = "outputs/workspaces/BootstrapCorrelations_spearman_sunrise_sunset.RData")

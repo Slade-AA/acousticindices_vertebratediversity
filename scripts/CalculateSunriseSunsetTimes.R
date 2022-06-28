@@ -63,30 +63,4 @@ merged <- left_join(merged, rbind(getSunlightTimes(data = merged[merged$tz == 'A
 AverageSunriseSunsetPerTrip <- merged %>% group_by(Site, samplingTrip) %>% summarise(sunrise = format(mean(strptime(gsub(".* ([0-9:])", "\\1", sunrise), "%H:%M:%S")), "%H:%M:%S"),
                                                                                      sunset = format(mean(strptime(gsub(".* ([0-9:])", "\\1", sunset), "%H:%M:%S")), "%H:%M:%S"))
 
-
-
-#Join each sampling trips average sunrise and sunset time to indices
-AP_Kaleidoscope_sunrise_sunset <- left_join(AP_Kaleidoscope, AverageSunriseSunsetPerTrip, 
-                                            by = c("Site" = "Site", "sampling.period" = "samplingTrip"))
-
-#Calculate summaries using sunrise and sunset times
-
-acousticIndices_day_sunrise_sunset <- AP_Kaleidoscope_sunrise_sunset %>% 
-  group_by(Site, sampling.period) %>% 
-  filter(hms(TIME_NEW) >= hms(sunrise) & hms(TIME_NEW) < hms(sunset)) %>% 
-  group_by(Site, Sensor, sampling.period) %>% 
-  mutate(n = n(), p = n()/(period_to_seconds(hm(gsub("\\:[0-9]{2}$","",sunset[1])) - hm(gsub("\\:[0-9]{2}$","",sunrise[1])))/60*7)) %>% 
-  group_by(Site, Sensor, sampling.period, n, p) %>% 
-  summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
-                    starts_with("ACI")), 
-               list(mean = mean, median = median, iqr = IQR, sd = sd))
-
-acousticIndices_night_sunrise_sunset <- AP_Kaleidoscope_sunrise_sunset %>% 
-  group_by(Site, sampling.period) %>% 
-  filter(hms(TIME_NEW) >= hms(sunset) | hms(TIME_NEW) < hms(sunrise)) %>% 
-  group_by(Site, Sensor, sampling.period) %>% 
-  mutate(n = n(), p = n()/(period_to_seconds(hm("24:00") - hm(gsub("\\:[0-9]{2}$","",sunset[1])) + hm(gsub("\\:[0-9]{2}$","",sunrise[1])))/60*7)) %>% 
-  group_by(Site, Sensor, sampling.period, n, p) %>% 
-  summarise_at(vars(all_of(APIndices), all_of(KaleidoscopeIndices),
-                    starts_with("ACI")), 
-               list(mean = mean, median = median, iqr = IQR, sd = sd))
+save(AverageSunriseSunsetPerTrip, file = paste0("./outputs/data/", Sys.Date(), "_AverageSunriseSunsetPerTrip.RData"))

@@ -8,3 +8,5 @@ outputs/figures.local
 outputs/workspaces
 outputs/data/fullsurveyperiod
 outputs/old
+manuscript
+*.xcf

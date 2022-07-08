@@ -1,0 +1,13 @@
+Taxa,Measure,Mean,Index,rf_obs_pred
+all_all,richness,0.71,MidFreqCover,0.77
+all_all,shannon,0.52,SptDensity,0.62
+all_all,count,0.71,AcousticComplexity,0.78
+not.birds_all,richness,0.59,HighFreqCover,0.73
+not.birds_all,shannon,0.34,Activity,0.47
+not.birds_all,count,0.62,NDSI,0.66
+birds_day,richness,0.7,ClusterCount,0.78
+birds_day,shannon,0.53,ClusterCount,0.72
+birds_day,count,0.75,MidFreqCover,0.8
+frogs_night,richness,0.61,MidFreqCover,0.71
+frogs_night,shannon,0.43,MidFreqCover,0.59
+frogs_night,count,0.75,MidFreqCover,0.76

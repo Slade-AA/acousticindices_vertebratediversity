@@ -90,6 +90,7 @@ for (data in 1:length(datasets)) {
   #Summary statistics
   speciesPerPlot <- rowSums(tmp[2:(length(tmp)-4)])
   SummaryStats[[names(datasets)[data]]] <- data.frame(taxa = names(datasets)[data],
+                                                      total = ncol(tmp[2:(length(tmp)-4)]),
                                                       mean = mean(speciesPerPlot),
                                                       sd = sd(speciesPerPlot))
 }

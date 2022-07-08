@@ -48,8 +48,11 @@ datasets <- list(all = read.csv("rawdata/biodiversity/sp.all.csv"),
                  avian = read.csv("rawdata/biodiversity/sp.aves.survey.csv"),
                  anuran = read.csv("rawdata/biodiversity/sp.anura.csv"))
 
+#filter out plots that had less than 70% of recordings available so that data matches other analyses
+
 NMDSPlots <- list()
 ANOSIM <- list()
+SummaryStats <- list()
 for (data in 1:length(datasets)) {
   #split combined information column into separate columns
   tmp <- datasets[[data]] %>% mutate(sampling.period = paste0(gsub(" .*", "", season.site.plot), ".2021"),
@@ -62,7 +65,7 @@ for (data in 1:length(datasets)) {
   sites <- data.frame(ordi$points)
   sites$sites <- tmp$Site
   
-  ANOSIM[[names(datasets)[data]]] <- anosim(tmp[2:(length(tmp)-4)], tmp$Site, distance = "jaccard")
+
   
   NMDSPlots[[names(datasets)[data]]] <- ggplot() + 
     geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
@@ -80,6 +83,15 @@ for (data in 1:length(datasets)) {
     #coord_fixed(ratio = 1) +
     theme_classic() +
     theme(legend.position = "none")
+  
+  #ANOSIM
+  ANOSIM[[names(datasets)[data]]] <- anosim(tmp[2:(length(tmp)-4)], tmp$Site, distance = "jaccard")
+  
+  #Summary statistics
+  speciesPerPlot <- rowSums(tmp[2:(length(tmp)-4)])
+  SummaryStats[[names(datasets)[data]]] <- data.frame(taxa = names(datasets)[data],
+                                                      mean = mean(speciesPerPlot),
+                                                      sd = sd(speciesPerPlot))
 }
 
 legend_bottom <- get_legend(

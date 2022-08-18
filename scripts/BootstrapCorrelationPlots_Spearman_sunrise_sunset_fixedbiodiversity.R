@@ -275,11 +275,11 @@ legend_bottom <- get_legend(
 
 correlationPlot <- plot_grid(plotlist = correlationPlots,
                              ncol = 2,
-                             labels = c("a) all vertebrates",
-                                        "b) non-avian vertebrates",
-                                        "c) birds",
-                                        "d) frogs"),
-                             hjust = 0, label_x = 0.12, label_y = 1.02) %>% 
+                             labels = c("a) all",
+                                        "b) non-avian",
+                                        "c) avian",
+                                        "d) anuran"),
+                             hjust = 0, label_x = 0.14, label_y = 1.02) %>% 
   annotate_figure(left = "Acoustic index", bottom = "Mean correlation") %>% 
   plot_grid(legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
@@ -287,6 +287,11 @@ ggsave("outputs/figures/bootstrapcorrelations_sunrise_sunset_fixedbiodiversity/b
        correlationPlot,
        width = 24, height = 24, units = "cm", dpi = 800)
 
+#New 1000dpi figure for publication (Ecological Indicators)
+
+ggsave("outputs/figures/publication/Figure02.png",
+       correlationPlot,
+       width = 190, height = 190, units = "mm", dpi = 1000)
 
 # Create table of correlation values --------------------------------------
 

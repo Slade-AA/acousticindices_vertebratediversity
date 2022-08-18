@@ -127,3 +127,13 @@ Plot_ObservedPredicted <- egg::ggarrange(as_ggplot(text_grob(label = "richness")
 ggsave(filename = "outputs/figures/singleSite_Birds_obs_pred_sunrise_sunset_fixedbiodiversity.png",
        plot = Plot_ObservedPredicted,
        width = 12, height = 18, units = "cm", dpi = 800)
+
+#New 1000dpi figure for publication (Ecological Indicators)
+
+ggsave(filename = "outputs/figures/publication/Figure06.png",
+       plot = Plot_ObservedPredicted,
+       width = 90, height = 135, units = "mm", dpi = 1000)
+
+# Save workspace for later loading ----------------------------------------
+
+save.image(file = "outputs/workspaces/SingleSite_lmer_sunrise_sunset_fixedbiodiversity.RData")

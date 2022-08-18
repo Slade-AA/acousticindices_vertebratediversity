@@ -295,6 +295,14 @@ ggsave(filename = "outputs/figures/randomforestperformance_sunrise_sunset_fixedb
                                     legend.title = element_blank()),
        width = 10, height = 10, units = "cm", dpi = 800)
 
+#New 1000dpi figure for publication (Ecological Indicators)
+
+ggsave(filename = "outputs/figures/publication/Figure03.png",
+       plot = Plot_MAE_norm + theme(legend.position = c(0.5, 0.8),
+                                    legend.direction = "horizontal",
+                                    legend.title = element_blank()),
+       width = 90, height = 90, units = "mm", dpi = 1000)
+
 # Observed vs predicted plots ---------------------------------------------
 
 Plots_ObsPred <- list()
@@ -367,6 +375,13 @@ Plot_ObservedPredicted <- egg::ggarrange(as_ggplot(text_grob(label = "richness")
 ggsave(filename = "outputs/figures/randomforestobspred_sunrise_sunset_fixedbiodiversity/ObservedPredicted_cforest.png",
        plot = Plot_ObservedPredicted,
        width = 20, height = 20, units = "cm", dpi = 800)
+
+#New 1000dpi figure for publication (Ecological Indicators)
+
+ggsave(filename = "outputs/figures/publication/Figure04.png",
+       plot = Plot_ObservedPredicted,
+       width = 190, height = 190, units = "mm", dpi = 1000)
+
 
 #Calculate spearman rank correlations for observed vs predicted values from random forest
 randomforest_spearman <- list()
@@ -461,6 +476,12 @@ Plot_VariableImportance <- egg::ggarrange(as_ggplot(text_grob(label = "richness"
 ggsave(filename = "outputs/figures/randomforestvariableimportance_sunrise_sunset_fixedbiodiversity/VariableImportance_cforest.png",
        plot = Plot_VariableImportance,
        width = 20, height = 20, units = "cm", dpi = 800)
+
+#New 1000dpi figure for publication (Ecological Indicators)
+
+ggsave(filename = "outputs/figures/publication/Figure05.png",
+       plot = Plot_VariableImportance,
+       width = 190, height = 190, units = "mm", dpi = 1000)
 
 # Save workspace for later loading ----------------------------------------
 

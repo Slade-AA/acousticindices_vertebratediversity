@@ -2,16 +2,19 @@ library(vegan)
 library(tidyverse)
 library(cowplot)
 
-data <- list(all = read.csv("rawdata/biodiversity/sp.all.csv")
-             anuran = read.csv("rawdata/biodiversity/sp.anura.csv")
-             avian = read.csv("rawdata/biodiversity/sp.aves.survey.csv")
+data <- list(all = read.csv("rawdata/biodiversity/sp.all.csv"),
+             anuran = read.csv("rawdata/biodiversity/sp.anura.csv"),
+             avian = read.csv("rawdata/biodiversity/sp.aves.survey.csv"),
              not.avian = read.csv("rawdata/biodiversity/sp.not.aves.csv"))
 
 #split combined information column into separate columns
-all <- all %>% mutate(sampling.period = paste0(gsub(" .*", "", season.site.plot), ".2021"),
+all <- data$all %>% mutate(sampling.period = paste0(gsub(" .*", "", season.site.plot), ".2021"),
                       Site = gsub("[A-Za-z]{4,6} ([A-Za-z]{5,9}) .*", "\\1", season.site.plot),
                       Sensor = gsub("[A-Za-z]{4,6} [A-Za-z]{5,9} ([A-Za-z]{4}) .*", "\\1", season.site.plot),
                       type = gsub("[A-Za-z]{4,6} [A-Za-z]{5,9} [A-Za-z]{4} ([A-Za-z]*)", "\\1", season.site.plot))
+
+all %>% select(-season.site.plot, -sampling.period, -Site, -Sensor, -type) %>% rowSums()
+
 
 #filter out plots that had less than 70% of recordings available so that data matches other analyses
 
